@@ -1,2 +1,2 @@
-# crispy-meme
-gonna make a website lol
+# Hello there
+github hosting is pretty nice
