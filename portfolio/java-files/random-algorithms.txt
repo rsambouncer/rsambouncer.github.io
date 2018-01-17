@@ -1,6 +1,6 @@
 public class hi{
     
-    public int[] rotateLeft3(int[] nums) {
+    public static int[] rotateLeft3(int[] nums) {
       int[][] ar = new int[2][nums.length]; //nums[0] is answer, nums[1] is order
       for(int a=0;a<nums.length;a++){ar[0][a]=nums[a];ar[1][a]=a;}
       long mm = ff(nums.length);
@@ -12,8 +12,8 @@ public class hi{
       return new int[]{999};
     
     }
-    private long ff(int a){if(a<2)return 1;return a*ff(a-1);}
-    private boolean isrr(int[] nums, int[] ar){
+    private static long ff(int a){if(a<2)return 1;return a*ff(a-1);}
+    private static boolean isrr(int[] nums, int[] ar){
       if(nums.length!=ar.length)return false;
       if(nums.length<2) return true;
       for(int a=0;a<nums.length-2;a++){
@@ -21,7 +21,7 @@ public class hi{
       }
       return nums[nums.length-1]==ar[0];
     }
-    private void next(int[][] ar){
+    private static void next(int[][] ar){
       int a = ar[1].length-1;
       while(a>0&&ar[1][a]<ar[1][a-1])a--;
       int b = 0;
@@ -43,7 +43,7 @@ public class hi{
 }
 
 
-public int find_prime(int n){
+public static int find_prime(int n){
   //range(0-2000000)
   
   if(n>2000000) return 0-1;
@@ -91,7 +91,7 @@ public int find_prime(int n){
 }
 
 
-public int[] makeprimes(int n){
+public static int[] makeprimes(int n){
   boolean[] nums = new boolean[n+1];
   int cc = 1;
   for(int a=3;a<=n;a+=2)nums[a] = true;
@@ -108,3 +108,69 @@ public int[] makeprimes(int n){
   
   return primes;
 }
+
+public static long primes_sum(int n){
+  boolean[] allnums = new boolean[n+1];
+  for(int a=3;a<=n;a+=2) allnums[a] = true;
+  long sum = 2;
+  boolean goo = true;
+  
+  for(int a=3;a<=n;a+=2){if(allnums[a]){
+    sum+=a;
+    if(goo){
+      long b=a*a;
+      if(b<=n)for(;b<=n;b+=a)allnums[(int)b]=false;
+      else goo = false;
+    }
+  }}
+  
+  return sum;
+}
+
+
+
+
+
+public static byte[] add_digits(byte[] aa, byte[] bb){
+  if(aa.length<bb.length){byte[] hh=aa;aa=bb;bb=hh;}
+  byte[] sum = new byte[aa.length+1];
+  boolean carry = false;
+  
+  int a=aa.length-1,b=bb.length-1,s=a+1;
+  while(b>=0){
+    sum[s] = (byte)(aa[a--]+bb[b--]);
+    if(carry){sum[s]++;carry = false;}
+    if(sum[s]>9){sum[s]-=10;carry = true;}
+    s--;
+  }
+  if(carry)while(a>=0){
+    sum[s] = (byte)(aa[a--]+1);
+    if(sum[s]>9) sum[s--]-=10;
+    else {carry = false;s--;break;}
+  }
+  if(carry){sum[0] = 1;return sum;}
+  else{
+    while(a>=0)sum[s--] = aa[a--];
+    return Arrays.copyOfRange(sum,1,sum.length);
+  }
+}
+
+
+public static int self_avoiding_walk(int w, int h){
+    return finct(h*w-w,0,h,w);
+}
+
+public static int finct(int ind, long ar,int h, int w){
+    if(ind==w-1) return 1;
+    int sum = 0;
+    ar = ar ^ ((long)1 << ind);
+      
+    if(ind>=w             &&((ar >> ind-w)&1)==0)   sum+=finct(ind-w,ar,h,w);
+    if(ind+w<h*w          &&((ar >> ind+w)&1)==0)   sum+=finct(ind+w,ar,h,w);
+    if(ind%w>0            &&((ar >> ind-1)&1)==0)   sum+=finct(ind-1,ar,h,w);
+    if((ind+1)%w!=0       &&((ar >> ind+1)&1)==0)   sum+=finct(ind+1,ar,h,w);
+    
+    return sum;
+    
+}
+
