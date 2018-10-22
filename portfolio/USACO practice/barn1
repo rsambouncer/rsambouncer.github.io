@@ -1,0 +1,45 @@
+/*
+ID: 255901
+LANG: JAVA
+PROG: barn1
+*/
+import java.io.*;
+import java.util.*;
+
+class barn1 {
+  public static void main (String [] args) throws IOException {
+    BufferedReader f = new BufferedReader(new FileReader("barn1.in"));
+    PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("barn1.out")));
+    
+    StringTokenizer snc = new StringTokenizer(f.readLine());
+    int numB = Integer.parseInt(snc.nextToken());    
+    int numS = Integer.parseInt(snc.nextToken())+1; 
+    int numC = Integer.parseInt(snc.nextToken()); 
+    boolean[] stalls = new boolean[numS];
+    for(int a=0;a<numC;a++) stalls[Integer.parseInt(f.readLine())] = true;    
+    
+    numB = 0-numB; if(stalls[0]) numB++;
+    for(int a=1;a<numS;a++){
+      if(stalls[a]&&!stalls[a-1]) numB++;
+    }
+      
+    while(numB>0){
+      int st = -numS-1,fs = 0,fl = numS+1;
+      for(int a=1;a<numS;a++){
+        if(stalls[a-1]&&!stalls[a]) st = a;
+        else if(!stalls[a-1]&&stalls[a]){
+          if(a-st<fl){
+            fs = st;
+            fl = a-st;
+          }
+        }
+      }
+      for(int a=fs;a<fs+fl;a++) stalls[a] = true; 
+      numC+=fl;
+      numB--;
+    }
+    
+    out.println(numC);
+    out.close();                                  
+  }
+}

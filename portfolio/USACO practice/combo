@@ -1,0 +1,41 @@
+/*
+ID: 255901
+LANG: JAVA
+PROG: combo
+*/
+import java.io.*;
+import java.util.*;
+
+class combo {
+  public static void main (String [] args) throws IOException {
+    BufferedReader f = new BufferedReader(new FileReader("combo.in"));
+    PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("combo.out")));
+    
+    int len = Integer.parseInt(f.readLine());
+    if(len<6){out.println(len*len*len);out.close();return;}
+    StringTokenizer snc = new StringTokenizer(f.readLine());
+    int a1 = Integer.parseInt(snc.nextToken());
+    int a2 = Integer.parseInt(snc.nextToken());
+    int a3 = Integer.parseInt(snc.nextToken());
+    snc = new StringTokenizer(f.readLine());
+    int b1 = Integer.parseInt(snc.nextToken());
+    int b2 = Integer.parseInt(snc.nextToken());
+    int b3 = Integer.parseInt(snc.nextToken());
+    
+
+    out.println(250-ff(a1,b1,len)*ff(a2,b2,len)*ff(a3,b3,len));
+    out.close();                          
+  }
+  public static int ff(int a,int b,int len){
+    int f1Nal = 0;
+    if(a<b){
+      if(b-a<5) f1Nal+=a+5-b;
+      if(len-b+a<5) f1Nal+= 5+b-len-a;
+    }
+    else{
+      if(a-b<5) f1Nal+=b+5-a;
+      if(len-a+b<5) f1Nal+= 5+a-len-b;
+    }
+    return f1Nal;
+  }
+}
