@@ -34,13 +34,18 @@ public class cowbasic{
     //this logic is handled in codeToMatrix
     numvars = getInd("");    
     
-    Matrix f1Naltransform = codeToMatrix(0,len);
-    
-    out.println(f1Naltransform.els[numvars][codevars[len][1]]);                       
+    Matrix programAsProcessedMatrix = codeToMatrix(0,len);
+    int returnedVariable = codevars[len][1];
+    int[][] matrixElements = programAsProcessedMatrix.els;
+    int finalReturnValue = matrixElements[numvars][returnedVariable];
+    out.println(finalReturnValue);                       
     out.close();                                  
   }
   
-  
+  //codeToMatrix recursively translates string input into matrix form for proccessing
+  //each line can be translated into a matrix; 
+  //lines are then multiplied together to combine them
+  //loops are represented by matrix powers
   public static Matrix codeToMatrix(int st, int nd){
     if(codevars[st][0]>=0){
       if(nd>st+1){
@@ -136,7 +141,11 @@ public class cowbasic{
   
   private static class Matrix{
     public int[][] els;
-    public int h,w;
+      //elements of the matrix
+    public int h;
+      //matrix height
+    public int w;
+      //matrix width
     public Matrix(int w,int h){
       els = new int[h][w];
       this.h = h;
@@ -167,8 +176,30 @@ public class cowbasic{
       }
       return new Matrix(product);
     }
+    
+    //Matrix.power recursively calculates mat raised to the
+    //power p by repeated squaring
     public static Matrix power(Matrix mat, int p){
-      if(p==1) return mat;
+      if(mat.w!=mat.h)
+      {
+        throw new RuntimeException("Only square matrices can be raised to a power");
+      }
+      if(p<0)
+      {
+        throw new RuntimeException("Matrix.power can not be used to find inverses");
+      }
+      if(p==0) //return identity
+      {
+        int[][] identity = new int[mat.w][mat.w];
+        for(int a=0;a<mat.w;a++){
+          identity[a][a] = 1;
+        }
+        Matrix identityMatrix = new Matrix(identity);
+        return identityMatrix;
+      }
+      if(p==1){ 
+        return mat;
+      }
       Matrix f1Nal = power(mat,p/2);
       f1Nal = multiply(f1Nal,f1Nal);
       if(p%2==1) f1Nal = multiply(f1Nal,mat);
