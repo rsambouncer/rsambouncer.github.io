@@ -6,23 +6,36 @@ PROG: cowbasic
 import java.io.*;
 import java.util.*;
 
-public class cowbasic {                             
+public class cowbasic{                             
   
-  public static String[] varnames = new String[100];
+  public static String[] varnames = new String[100]; 
+    //maximum of 100 variables in problem statement
   public static int[][] codevars = new int[100][62]; 
     //in "setline": index of variable being modified, intiger added, vars added, -1 to signify end
     //in "loopline": -1,times to loop, end bracket line
     //end bracket line: -2, begin bracket line
     //return line: -3, return index
-  public static int len, numvars;
+  public static int len; 
+  public static int numvars;
+    //current number of variables
+  
   public static void main (String [] args) throws IOException {
-    BufferedReader f = new BufferedReader(new FileReader("cowbasic.in"));
-    PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("cowbasic.out")));
+    FileReader inputFileReader = new FileReader("cowbasic.in");
+    BufferedReader fileInput = new BufferedReader(inputFileReader);
     
-    len = translateInput(f);
-    numvars = getInd("");    //index of constants
+    FileWriter outputFileWriter = new FileWriter("cowbasic.out");
+    BufferedWriter outputBufferedWriter = new BufferedWriter(outputFileWriter);
+    PrintWriter out = new PrintWriter(outputBufferedWriter);
+    
+    //translateIput number of lines to be proccessed
+    len = translateInput(fileInput);
+    
+    //constants are stored in index 0 - therefore all constants are assigned the 'empty' name
+    //this logic is handled in codeToMatrix
+    numvars = getInd("");    
+    
     Matrix f1Naltransform = codeToMatrix(0,len);
-
+    
     out.println(f1Naltransform.els[numvars][codevars[len][1]]);                       
     out.close();                                  
   }
