@@ -55,6 +55,17 @@ public class cowbasic
   {
     if(codevars[st][0]>=0)
     {
+      /*this "line" in the cowbasic code sets a variable
+        has a matrix of the form (for example):
+      .
+                    | 0 0 0 4 0 |
+                    | 0 0 0 1 0 |
+      (identity) +  | 0 0 0 2 0 |
+                    | 0 0 0 0 0 |
+                    | 0 0 0 1 0 |
+       .             
+       this would be equivelent to a cowbasic line c = 4 + a + b + d + b
+      */
       if(nd>st+1)
       {
         Matrix restlines = codeToMatrix(st+1,nd);
@@ -262,7 +273,8 @@ public class cowbasic
     {
       if(d<=0)
       {
-        throw new RuntimeException("Matrix dimensions have to be positive");
+        String errmsg = "Matrix dimensions have to be positive";
+        throw new RuntimeException(errmsg);
       }
       int[][] identity = new int[d][d];
       for(int a=0;a<d;a++)
@@ -278,7 +290,8 @@ public class cowbasic
     {
       if(mat1.w!=mat2.w||mat1.h!=mat2.h)
       {
-        throw new RuntimeException("Dimensions of matrices have to match to be added");
+        String errmsg = "Dimensions of matrices have to match to be added";
+        throw new RuntimeException(errmsg);
       }
       int[][] sum = new int[mat1.w][mat1.h];
       for(int a=0;a<mat1.w;a++)
@@ -302,7 +315,8 @@ public class cowbasic
     {
       if(mat1.w!=mat2.w||mat1.h!=mat2.h)
       {
-        throw new RuntimeException("Dimensions of matrices have to match to be subtracted");
+        String errmsg = "Dimensions of matrices have to match to be subtracted";
+        throw new RuntimeException(errmsg);
       }
       int[][] diff = new int[mat1.w][mat1.h];
       for(int a=0;a<mat1.w;a++)
@@ -348,7 +362,8 @@ public class cowbasic
     {
       if(mat1.w!=mat2.h)
       { 
-        throw new RuntimeException("Inner dimensions of matrices have to match to be multiplied");
+        String errmsg = "Inner dimensions of matrices have to match to be multiplied";
+        throw new RuntimeException(errmsg);
       }
       int[][] product = new int[mat1.h][mat2.w];
       for(int a=0;a<mat1.h;a++)
@@ -377,11 +392,13 @@ public class cowbasic
     {
       if(mat.w!=mat.h)
       {
-        throw new RuntimeException("Only square matrices can be raised to a power");
+        String errmsg = "Only square matrices can be raised to a power";
+        throw new RuntimeException(errmsg);
       }
       if(p<0)
       {
-        throw new RuntimeException("Matrix.power can not be used to find inverses");
+        String errmsg = "Matrix.power can not be used to find inverses";
+        throw new RuntimeException(errmsg);
       }
       if(p==0) //return identity
       {
