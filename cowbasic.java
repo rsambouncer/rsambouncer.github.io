@@ -7,9 +7,11 @@ import java.io.*;
 import java.util.*;
 
 public class cowbasic
-{                               
-  public static String[] varnames = new String[100]; 
-    //maximum of 100 variables in problem statement
+{ 
+  public static LinkedList<String> varnames = new LinkedList<String>();
+    //varnames stores the names of each of the variables
+    //so they can be referenced when converting code from 
+    //string form to matrix form
   public static int[][] codevars = new int[100][62]; 
     //in "setline": index of variable being modified, intiger added, vars added, -1 to signify end
     //in "loopline": -1,times to loop, end bracket line
@@ -42,7 +44,7 @@ public class cowbasic
     out.close();                                  
   }
   
-  //codeToMatrix recursively translates string input into matrix form for proccessing
+  //codeToMatrix recursively translates string input into matrix form for processing
   //each line can be translated into a matrix; 
   //lines are then multiplied together to combine them
   //loops are represented by matrix powers
@@ -81,12 +83,21 @@ public class cowbasic
     while(codevars[st][a]!=-1) thisline.els[ codevars[st][a++] ][b]++;
     return thisline;
   }
-  public static int translateInput(BufferedReader f) throws IOException{
-    int len = 0; //len is line of return statement
-    int[] bracketstack = new int[100]; int bs = 0; //next place to add bracket
-    for(int a=0;a<100;a++){ 
-      String codeline = f.readLine().trim();
-      if(setUpSetLine(a,codeline));
+  public static int translateInput(BufferedReader f) throws IOException
+  {
+    int len = 0; 
+    //len is line of return statement
+    int[] bracketstack = new int[100];
+    //program is at most 100 lines long,
+    //according to problem statement
+    int bs = 0; 
+    //bs is next place to add bracket
+    for(int a=0;a<100;a++)
+    { 
+      String codeline = f.readLine();
+      codeline = codeline.trim();
+      boolean isSetLine = setUpSetLine(a,codeline);
+      if(isSetLine);
       else if(codeline.charAt(0)>='0'&&codeline.charAt(0)<='9'){
         //begin loop
         bracketstack[bs++] = a;
@@ -112,31 +123,73 @@ public class cowbasic
     }
     return len;
   }
+  
+  //a "set line" is a lone of the type "<var> = <expression>"
+  //setUpSetLine will process the line if it is a set line, 
+  //or return false if the line is not a set line
   public static boolean setUpSetLine(int a, String line){
-    if(line.charAt(0)>='a'&&line.charAt(0)<='z'){
+    if(isLetter(line.charAt(0)))
+    {
+      //since "<expression>" is just of the form of constants and variables to add,
+      //we can loop through it without having to use recursion
       StringTokenizer st = new StringTokenizer(line);
-      int b = 2;
-      codevars[a][0] = getInd(st.nextToken());
-      while(st.hasMoreTokens()){
+      int b = 2; 
+      //b is index of the current variable to add
+      codevars[a][0] = getInd(st.nextToken()); 
+      //variable name
+      while(st.hasMoreTokens())
+      {
         String aa = st.nextToken();
-        if(aa.charAt(0)>='a'&&aa.charAt(0)<='z') 
-          codevars[a][b++] = getInd(aa);
-        else if(aa.charAt(0)>='0'&&aa.charAt(0)<='9') 
+        if(isLetter(aa.charAt(0)))
+        { 
+          codevars[a][b] = getInd(aa);
+          b++;
+        }
+        else if(isNumber(aa.charAt(0)))
+        {
           codevars[a][1]+= Integer.parseInt(aa);
+        }
       }
       codevars[a][b] = -1;
+      //-1 to end the line regardless
       return true;
-    } 
-    return false;
-  }
-  public static int getInd(String str){
-    int a=0;
-    while(varnames[a]!=null){
-      if(varnames[a].equals(str)) return a;
-      a++;
     }
-    varnames[a] = str;
-    return a;
+    else
+    {
+      //line is a loop or a return statement - can not process here
+      return false;
+    }
+  }
+  
+  //returns whether a charecter is a letter
+  public static boolean isLetter(char ch)
+  {
+    return ch>='a' && ch<='z';
+  }
+  
+  //returns whater a charecter is a number
+  public static boolean isNumber(char ch)
+  {
+    return ch>='0' && ch<='9';
+  }
+  
+  //getInd returns the index that corresponds with a variable name
+  //if the variable name has not been added yet, it adds it
+  //and then returns it's index
+  //implementation uses a LinkedList because LinkedList allows for expandable memory
+  //and has an indexOf method to find names with
+  public static int getInd(String str)
+  {
+    int ind = varnames.indexOf(str);
+    if(ind>=0)
+    {
+      return ind;
+    }
+    else
+    {
+      varnames.add(str);
+      return varnames.size()-1;
+    }
   }
   
   private static class Matrix
