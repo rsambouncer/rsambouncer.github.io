@@ -226,6 +226,29 @@ public class cowbasic
       return answer;
     }
     
+    //multiplies the matrix by the given integer scalar value
+    public static Matrix multiplyByScalar(Matrix mat, int scalar)
+    {
+      if(mat.h==0||mat.w==0)
+      {
+        return mat;
+      }
+      int[][] newMat = new int[mat.h][mat.w];
+      for(int a=0;a<mat.h;a++)
+      {
+        for(int b=0;b<mat.w;b++)
+        {
+          newMat[a][b] = mat.els[a][b]*scalar;
+          newMat[a][b] %= 1_000_000_007;
+          //problem statement specifies that all addition is done mod 10^9+7,
+          //to keep numbers in int range 
+          //10^9+7 is just under half of 2.1 billion
+        }
+      }
+      Matrix answer = new Matrix(newMat);
+      return answer;
+    }
+    
     //multiplies two Matrices, according to the standard formula
     public static Matrix multiply(Matrix mat1, Matrix mat2)
     {
