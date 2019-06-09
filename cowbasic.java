@@ -22,10 +22,13 @@ public class cowbasic
     //current number of variables
   
   public static void main (String [] args) throws IOException {
-    FileReader inputFileReader = new FileReader("cowbasic.in");
+    String inputfilename = "cowbasic.in";
+    String outputfilename = "couwbasic.out";
+    
+    FileReader inputFileReader = new FileReader(inputfilename);
     BufferedReader fileInput = new BufferedReader(inputFileReader);
     
-    FileWriter outputFileWriter = new FileWriter("cowbasic.out");
+    FileWriter outputFileWriter = new FileWriter(outputfilename);
     BufferedWriter outputBufferedWriter = new BufferedWriter(outputFileWriter);
     PrintWriter out = new PrintWriter(outputBufferedWriter);
     
@@ -48,21 +51,32 @@ public class cowbasic
   //each line can be translated into a matrix; 
   //lines are then multiplied together to combine them
   //loops are represented by matrix powers
-  public static Matrix codeToMatrix(int st, int nd){
-    if(codevars[st][0]>=0){
-      if(nd>st+1){
+  public static Matrix codeToMatrix(int st, int nd)
+  {
+    if(codevars[st][0]>=0)
+    {
+      if(nd>st+1)
+      {
         Matrix restlines = codeToMatrix(st+1,nd);
         Matrix thisline = lineToMatrix(st);
         return Matrix.multiply(thisline,restlines);
-      }else return lineToMatrix(st);
+      }
+      else
+      { 
+        return lineToMatrix(st);
+      }
     }
-    else if(codevars[st][0]==-1){
-      if( codevars[st][2]+1==nd ) 
+    else if(codevars[st][0]==-1)
+    {
+      if( codevars[st][2]+1==nd )
+      {
         return Matrix.power(
           codeToMatrix(st+1,nd-1),
           codevars[st][1]
         );
-      else{
+      }
+      else
+      {
         Matrix restlines = codeToMatrix( codevars[st][2]+1,nd );
         Matrix looplines = Matrix.power(
           codeToMatrix(st+1,codevars[st][2]),
@@ -71,16 +85,32 @@ public class cowbasic
         return Matrix.multiply(looplines,restlines);
       }
     }
-    else return null;
+    else
+    {
+      return null;
+    }
   }
-  public static Matrix lineToMatrix(int st){
+  public static Matrix lineToMatrix(int st)
+  {
     Matrix thisline = new Matrix(numvars+1,numvars+1);
-    for(int c=0;c<=numvars;c++) thisline.els[c][c] = 1;
-    int b = codevars[st][0]; thisline.els[b][b] = 0;
+    //the +1 is because hard-coded integers are stored
+    //in the "blank" variable
+    
+    for(int c=0;c<=numvars;c++)
+    { 
+      thisline.els[c][c] = 1;
+    }
+    int b = codevars[st][0]; 
+    thisline.els[b][b] = 0;
     thisline.els[numvars][b] = codevars[st][1];
     
     int a=2;
-    while(codevars[st][a]!=-1) thisline.els[ codevars[st][a++] ][b]++;
+    while(codevars[st][a]!=-1)
+    { 
+      int ind1 = codevars[st][a];
+      a++;
+      thisline.els[ind1][b]++;
+    }
     return thisline;
   }
   public static int translateInput(BufferedReader f) throws IOException
@@ -97,28 +127,39 @@ public class cowbasic
       String codeline = f.readLine();
       codeline = codeline.trim();
       boolean isSetLine = setUpSetLine(a,codeline);
-      if(isSetLine);
-      else if(codeline.charAt(0)>='0'&&codeline.charAt(0)<='9'){
+      if(isSetLine)
+      {
+        continue;
+      }
+      else if(isNumber(codeline.charAt(0)))
+      {
         //begin loop
-        bracketstack[bs++] = a;
+        bracketstack[bs] = a;
+        bs++;
         codevars[a][0] = -1;
         codevars[a][1] = Integer.parseInt(new StringTokenizer(
                            codeline
                          ).nextToken());
       }
-      else if(codeline.charAt(0)=='}'){
+      else if(codeline.charAt(0)=='}')
+      {
         //end bracket
         codevars[a][0] = -2;
-        codevars[a][1] = bracketstack[--bs];
-        codevars[ codevars[a][1] ][2] = a;
+        bs--;
+        codevars[a][1] = bracketstack[bs];
+        int indOfBeginBracket = codevars[a][1];
+        codevars[indOfBeginBracket][2] = a;
       }
-      else{ //return statement
+      else
+      { 
+        //return statement
         codevars[a][0] = -3;
-          StringTokenizer weofgij = new StringTokenizer(codeline);
-            weofgij.nextToken();
+        StringTokenizer weofgij = new StringTokenizer(codeline);
+        weofgij.nextToken();
+        //we can ignore first word since we know it's "return"
         codevars[a][1] = getInd(weofgij.nextToken());
         len = a;
-        break;
+        break; //after return statement, we are done
       }
     }
     return len;
