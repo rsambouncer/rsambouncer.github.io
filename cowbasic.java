@@ -428,6 +428,92 @@ public class cowbasic
         return answer;
       }
     }
+    
+    //finds the determinant of a matrix
+    public static long determinant(Matrix matrix)
+    {
+      if(matrix.w!=matrix.h)
+      {
+        String errmsg = "Only square matrices have determinants";
+        throw new RuntimeException(errmsg);
+      }
+      if(len<=0)
+      {
+        String errmsg = "Matrix must have a positive side length to have a determinant";
+        throw new RuntimeException(errmsg);
+      }
+      
+      int len = matrix.w;
+      int[][] mat = matrix.els;
+      if(len==1)
+      {
+        return mat[0][0];
+      }
+      int[] getC = new int[len];
+      boolean[] used = new boolean[len];
+      boolean[] neg = new boolean[len];
+      long[] sums = new long[len];
+      
+      int r = len-2;
+      
+      for(int a=0;a<len;a++)
+      {
+        getC[a] = a;
+        used[a] = true;
+      }
+      used[len-1] = false;
+      sums[len-1] = mat[len-1][len-1];
+      
+      while(r>=0)
+      {
+        long result = mat[r][getC[r]]*sums[r+1];
+        if(neg[r])
+        {
+          sums[r] -= result;
+        }
+        else
+        {
+          sums[r] += result;
+        }
+        neg[r] = !neg[r];
+        sums[r+1] = 0;
+        used[getC[r]] = false;
+        int a = getC[r]+1;
+        while(a<len&&used[a])
+        {
+          a++;
+        }
+        if(a==len)
+        {
+          r--;
+        }
+        else
+        {
+          getC[r] = a;
+          used[a] = true;
+          int b = r+1;
+          a = 0;
+          while(b<len)
+          {
+            while(used[a])
+            {
+              a++;
+            }
+            getC[b] = a;
+            used[a] = true;
+            neg[b] = false;
+            a++;
+            b++;
+          }
+          r = len-2;
+          used[getC[len-1]] = false;
+          sums[len-1] = mat[len-1][getC[len-1]];
+        }
+      }
+      return sums[0];
+    }
+    
+    
   }
   
 }
