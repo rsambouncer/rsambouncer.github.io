@@ -6,18 +6,6 @@ PROG: cowbasic
 import java.io.*;
 import java.util.*;
 
-/*
-program demonstrates:
-  structures: linked list, matrices
-  recursion
-  file i/o
-  error and exception handling
-  method overloading
-  method overriding
-  
-*/
-
-
 public class cowbasic
 { 
   public static LinkedList<String> varnames = new LinkedList<String>();
