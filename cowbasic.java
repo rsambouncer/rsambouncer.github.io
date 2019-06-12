@@ -6,6 +6,18 @@ PROG: cowbasic
 import java.io.*;
 import java.util.*;
 
+/*
+program demonstrates:
+  structures: linked list, matrices
+  recursion
+  file i/o
+  error and exception handling
+  method overloading
+  method overriding
+  
+*/
+
+
 public class cowbasic
 { 
   public static LinkedList<String> varnames = new LinkedList<String>();
@@ -513,6 +525,123 @@ public class cowbasic
       return sums[0];
     }
     
+    //finds the determinant of a matrix, excluding spcified rows and columns. 
+    //can be used for lapacian expansion, or to find minors of a matrix.
+    //method is overloaded, see below
+    public static long determinant_partial(Matrix matrix, boolean[] rowUsed, boolean[] colUsed)
+    {
+      if(matrix.w!=matrix.h)
+      {
+        String errmsg = "Matrix has to be square";
+        throw new RuntimeException(errmsg);
+      }
+      int[][] mat = matrix.els;
+      int len = mat.length;
+      int nr = 0;
+      for (int a = 0; a < len; a++)
+      {
+        if (rowUsed[a])
+        {
+          nr++;
+        }
+      }
+      int nc = 0;
+      for (int a = 0; a < len; a++)
+      {
+        if (colUsed[a])
+        { 
+          nc++;
+        }
+      }
+      if (nr != nc)
+      {
+        String errmsg = "Partial matrix has to be square";
+        throw new RuntimeException(errmsg);
+      }
+      return determinant_partial(mat, rowUsed, colUsed, nr);
+    }
+    
+    //method is overloaded, see above
+    private static long determinant_partial(int[][] mat, boolean[] rowUsed, boolean[] colUsed, int numUsed)
+    {
+      int len = mat.length;
+      if (numUsed == len)
+      {
+        return 1;
+      }
+      else if (numUsed == len - 1)
+      {
+        int a = 0;
+        while (a < len)
+        {
+          if (rowUsed[a])
+          {
+            a++;
+          }
+          else break;
+        }
+        int b = 0;
+        while (b < len)
+        {
+          if (colUsed[b])
+          {
+            b++;
+          }
+          else break;
+        }
+        return mat[a][b];
+      }
+      else
+      {
+        int a = 0;
+        while (a < len)
+        {
+          if (rowUsed[a])
+          {
+            a++;
+          }
+          else break;
+        }
+        int sum = 0;
+        boolean neg = false;
+        rowUsed[a] = true;
+        for (int b = 0; b < len; b++)
+        {
+          if (colUsed[b])
+          {
+            continue;
+          }
+          else
+          {
+            colUsed[b] = true;
+            long res = mat[a][b] * determinant_partial(mat, rowUsed, colUsed, numUsed + 1);
+            if (neg)
+            {
+              sum -= res;
+            }
+            else
+            {
+              sum += res;
+            }
+            neg = !neg;
+            colUsed[b] = false;
+          }
+        }
+        rowUsed[a] = false;
+        return sum;
+      }
+    }
+    
+    @Override
+    public String toString()
+    {
+      String res = "";
+      for(int a=0;a<els.length;a++)
+      {
+        res = res+ Arrays.toString(els[a])+"\n";
+      }
+      return res.substring(0,res.length()-1);
+    }
     
   }
   
