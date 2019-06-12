@@ -53,7 +53,7 @@ public class cowbasic
     
     Matrix programAsProcessedMatrix = codeToMatrix(0,len);
     int returnedVariable = codevars[len][1];
-    int[][] matrixElements = programAsProcessedMatrix.els;
+    int[][] matrixElements = programAsProcessedMatrix.getEls();
     int finalReturnValue = matrixElements[numvars][returnedVariable];
     out.println(finalReturnValue);                       
     out.close();                                  
@@ -116,23 +116,24 @@ public class cowbasic
   public static Matrix lineToMatrix(int st)
   {
     Matrix thisline = new Matrix(numvars+1,numvars+1);
+    int[][] els = thisline.getEls();
     //the +1 is because hard-coded integers are stored
     //in the "blank" variable
     
     for(int c=0;c<=numvars;c++)
     { 
-      thisline.els[c][c] = 1;
+      els[c][c] = 1;
     }
     int b = codevars[st][0]; 
-    thisline.els[b][b] = 0;
-    thisline.els[numvars][b] = codevars[st][1];
+    els[b][b] = 0;
+    els[numvars][b] = codevars[st][1];
     
     int a=2;
     while(codevars[st][a]!=-1)
     { 
       int ind1 = codevars[st][a];
       a++;
-      thisline.els[ind1][b]++;
+      els[ind1][b]++;
     }
     return thisline;
   }
@@ -258,12 +259,33 @@ public class cowbasic
   
   private static class Matrix
   {
-    public int[][] els;
-      //elements of the matrix
-    public int h;
-      //matrix height
-    public int w;
-      //matrix width
+    //elements of the matrix
+    private int[][] els;
+    public int[][] getEls()
+    {
+      return els;
+    }
+    public void setEls(int[][] els)
+    {
+      this.els = els;
+      this.h = els.length;
+      this.w = els[0].length;
+    }
+    
+    //matrix height
+    private int h;
+    public int getH()
+    {
+      return h;
+    }
+    
+    //matrix width
+    private int w;
+    public int getW()
+    {
+      return w;
+    }
+    
     
     //creates empty matrix with given dimensions
     public Matrix(int w,int h)
