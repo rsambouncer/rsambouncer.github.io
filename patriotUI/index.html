@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Bootstrap Example</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+  <style>
+    .fadeIn{opacity:0.6;}
+    .fadeIn:hover{opacity:1;}
+    .spanbox{
+      border:1px solid black;
+      border-radius:5px;
+      padding: 5px;
+    }
+    .numinput{
+      line-height:20px;
+    }
+    input[type=number]{
+        width: 80px;
+    }
+  </style>
+  
+  
+</head>
+<body>
+
+<div class="jumbotron text-center">
+  <h1>Title</h1>
+  <p>Select behavoir</p> 
+</div>
+  
+<div class="container">
+  <form id="form1">
+    <div>
+      <label>Policy</label> 
+      <input name="policyname" type="text" placeholder="name" required></input>
+    </div>
+    <br>    
+    
+    <div id="actionclause">
+      <select required>
+        <option value=""></option>
+        <option value="ALLOW">Allow</option>
+        <option value="DENY">Deny</option>
+      </select>
+      
+      <span style="line-height:40px;">[Loading options...]</span>
+      <br>
+      <input type="button" value="Clear expression" onclick="clearAction()" class="fadeIn">
+      
+    </div>
+    <br>
+    <div id="onlyifclause">
+      <input type="button" value='Add "only if"' onclick="addOnlyIfCondition()" class="fadeIn">
+    </div>
+    <br>
+    <div id="exceptclause">
+      <input type="button" value='Add "unless"' onclick="addExceptCondition()" class="fadeIn">
+    </div>
+    <br>
+    <input type="submit" class="fadein">
+
+    
+    
+  </form>
+  <div id="resultdiv">
+    
+  </div>
+</div>
+
+
+<script src="content.js"></script>
+
+</body>
+</html>
