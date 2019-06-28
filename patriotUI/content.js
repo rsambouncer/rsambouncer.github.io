@@ -1,5 +1,16 @@
 
 
+
+const policies = [];
+
+let currentIndex = -1;
+let actionTree = [{name:""}];
+let conditionTree = [{name:""},{name:""}];
+//during an edit, index will refer to policies list,
+//actionTree and conditionTree will both point to that object
+
+
+
 const actionArrays = {
   devices:["door1","door2","door3","door4"],
   commands:["on","off","open","close"],
@@ -16,8 +27,108 @@ const conditionArrays = {
 
 
 
-const actionTree = [{name:""}];
-const conditionTree = [{name:""},{name:""}];
+
+function editPolicy(el){
+  openPolicyEditingForm(getInd(el));
+}
+function deletePolicy(el){
+  let warning = "Are you sure you want to delete this policy?\n\n";
+  warning+=el.children[0].children[0].children[0].innerText;
+  if(!confirm(warning)) return;
+  
+  policies.splice(getInd(el),1);
+  document.getElementById("menusectionpolicylist").removeChild(el);
+}
+
+function newPolicy(){
+  let newEl = document.createElement("DIV");
+  newEl.classList.add("policyContainer");
+  newEl.innerHTML = '<div class="card bg-info text-white"><div class="card-body"><div style="float:left">[loading policy text...]</div><div style="float:right"><button class="btn btn-warning" onclick="editPolicy(this.parentElement.parentElement.parentElement.parentElement)">Edit</button> <button class="btn btn-warning" onclick="deletePolicy(this.parentElement.parentElement.parentElement.parentElement)">Delete</button></div></div></div><br>';
+  document.getElementById("menusectionpolicylist").append(newEl);
+  
+  policies.push({
+    text:"",
+    policyname:"",
+    allowdeny:0,
+    actionTree:[{name:""}],
+    conditionTree:[{name:""},{name:""}]
+  });
+  editPolicy(newEl);
+}
+
+function getInd(el){
+  let myClass = document.getElementsByClassName("policyContainer");
+  for(let a=0;a<myClass.length;a++) if(myClass[a]===el) return a;
+  return -1;
+}
+
+
+
+
+function updatePolicyFromTrees(){
+  //given: policy trees are now set
+  //so we need to update object, and the element text
+  let form1 = document.getElementById("form1");
+  let str = "POLICY "+form1.policyname.value+":\n";
+  let actionCode = constructActionCode(0);
+  str+=form1.allowdeny.value+" "+(actionCode===""?"EVERYTHING":actionCode)+"\n";
+  if(conditionTree[0].name!=="") 
+    str+="ONLY IF "+constructConditionCode(0)+"\n";
+  if(conditionTree[1].name!=="")
+    str+="EXCEPT "+constructConditionCode(1);
+  
+  policies[currentIndex] = {
+    text:str,
+    policyname:form1.policyname.value,
+    allowdeny:form1.allowdeny.selectedIndex,
+    actionTree:actionTree,
+    conditionTree:conditionTree
+  };
+  document.getElementsByClassName("policyContainer")[currentIndex].children[0].children[0].children[0].innerText = str;
+}
+
+function openPolicyEditingForm(ind){
+  document.getElementById("menusection").style.display = "none";
+  document.getElementById("buildersection").style.display = "block";
+  
+  //reconstruct form 
+  let form1 = document.getElementById("form1");
+  form1.policyname.value = policies[ind].policyname;
+  form1.allowdeny.selectedIndex = policies[ind].allowdeny;
+  
+  
+  
+  
+  currentIndex = ind;
+}
+
+
+function closePolicyEditingForm(){
+  document.getElementById("buildersection").style.display = "none";
+  document.getElementById("menusection").style.display = "block";
+  currentIndex = -1;
+  actionTree = [{name:""}];
+  conditionTree = [{name:""},{name:""}];
+  document.getElementById("form1").policyname.value = "";
+  document.getElementById("form1").allowdeny.selectedIndex = 0;
+  clearAction();
+  deleteOnlyIf();
+  deleteExcept();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 function pushAction(){
   actionTree.push({name:""});
@@ -70,15 +181,6 @@ function invertDate(d){
   let ar = d.split("-");
   return ar[1]+"-"+ar[2]+"-"+ar[0];
 }
-
-
-
-/* TODO: FINISH PARSING TREE
-
-then redo action building
-
-*/
-
 
 
 
@@ -368,15 +470,9 @@ form1.onsubmit = function(e){
     e.preventDefault();
     return;
   }
-  let str = "POLICY "+form1.policyname.value+":\n";
   
-  let actionCode = constructActionCode(0);
-  str+="DENY "+(actionCode===""?"EVERYTHING":actionCode)+"\n";
-  if(conditionTree[0].name!=="") 
-    str+="ONLY IF "+constructConditionCode(0)+"\n";
-  if(conditionTree[1].name!=="")
-    str+="EXCEPT "+constructConditionCode(1);
-  alert(str);
+  updatePolicyFromTrees();
+  closePolicyEditingForm();
   e.preventDefault();
 };
 
