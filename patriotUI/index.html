@@ -28,12 +28,25 @@
 </head>
 <body>
 
-<div class="jumbotron text-center">
-  <h1>Title</h1>
-  <p>Select behavior</p> 
+<div class="jumbotron text-center bg-primary text-white">
+  <h1>UPL Policy Generator</h1>
 </div>
   
-<div class="container">
+  
+<div class="container" id="menusection">
+  <h2>My Policies</h2>
+  <div id="menusectionpolicylist">
+  </div>
+  <div>
+    <button class="btn btn-success" onclick="newPolicy()">New Policy</button>
+  </div>
+  
+</div>
+  
+  
+  
+  
+<div class="container" id="buildersection" style="display:none">
   <form id="form1">
     <div>
       <label>Policy</label> 
@@ -42,7 +55,7 @@
     <br>    
     
     <div id="actionclause">
-      <select required>
+      <select name="allowdeny" required>
         <option value=""></option>
         <option value="ALLOW">Allow</option>
         <option value="DENY">Deny</option>
