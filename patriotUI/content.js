@@ -12,13 +12,13 @@ let conditionTree = [{name:""},{name:""}];
 
 
 
-const actionArrays = {
+let actionArrays = {
   devices:["door1","door2","door3","door4"],
   commands:["on","off","open","close"],
   settings:["s1","s2","s3","s4"]
 };
 
-const conditionArrays = {
+let conditionArrays = {
   devices:["FireSprinkler","WaterLeakSensor","VacationMode","MyPresence","HallwayMotionSensor"],
   states:["detected","not detected","on","off"],
   automationunits:["garage-door-opener","energy-saver","flood-alert","ready-for-rain"]
@@ -26,21 +26,41 @@ const conditionArrays = {
 
 
 
-
-
-
-function importConfigFromFile(el){
-  console.log(el.files);
-  alert("This feature doesn't work as of right now");
+function setConfigFromFileData(json){
+  actionArrays = json.actionArrays;
+  conditionArrays = json.conditionArrays;
 }
 
-function importPoliciesFromFile(el){
-  console.log(el.files);
-  alert("This feature doesn't work as of right now");
+function setPoliciesFromFileData(json){
+  for(let a=0;a<json.length;a++){
+    policies[a] = json[a];
+    createPolicyElement().children[0].children[0].children[0].innerText = json[a].text;
+  }
 }
+
+
+function importFromFile(files,handler){
+  if(files.length===0){ alert("Please select a file."); return;}
+  if(files.length>1){ alert("Please select only one file."); return;}
+  const objectURL = window.URL.createObjectURL(files[0]);
+  fetch(objectURL).then(r=>r.json()).then(handler);
+  window.URL.revokeObjectURL(objectURL);
+}
+
 
 function exportPoliciesToFile(){
-  alert("This feature doesn't work as of right now");
+  let dataStr = JSON.stringify(policies);
+  var file = new Blob([dataStr], {type: "application/json"});
+  var objectURL = window.URL.createObjectURL(file);
+  
+  var a = document.getElementById("exportpoliciesfile");
+  a.href = objectURL;
+  a.download = "policies.json";
+  a.click();
+  
+  window.setTimeout(function() {
+    window.URL.revokeObjectURL(objectURL); 
+  }, 0);
 }
 
 
@@ -58,12 +78,17 @@ function deletePolicy(el){
   document.getElementById("menusectionpolicylist").removeChild(el);
 }
 
-function newPolicy(){
+
+function createPolicyElement(){
   let newEl = document.createElement("DIV");
   newEl.classList.add("policyContainer");
   newEl.innerHTML = '<div class="card bg-info text-white"><div class="card-body"><div style="float:left;width:calc(100% - 135px);">[loading policy text...]</div><div style="float:right"><button class="btn btn-warning" onclick="editPolicy(this.parentElement.parentElement.parentElement.parentElement)">Edit</button> <button class="btn btn-warning" onclick="deletePolicy(this.parentElement.parentElement.parentElement.parentElement)">Delete</button></div></div></div><br>';
   document.getElementById("menusectionpolicylist").append(newEl);
-  
+  return newEl;
+}
+
+function newPolicy(){
+  let newEl = createPolicyElement();
   policies.push({
     text:"",
     policyname:"",
