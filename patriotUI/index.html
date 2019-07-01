@@ -40,7 +40,16 @@
   <div>
     <button class="btn btn-success" onclick="newPolicy()">New Policy</button>
   </div>
-  
+  <br>
+  <br>
+  <h2>Import/Export</h2>
+  <div>
+    <button class="btn btn-success" onclick="document.getElementById('importconfigfile').click()">Import config.json file</button> 
+    <button class="btn btn-success" onclick="document.getElementById('importpoliciesfile').click()">Import policies.json file</button> 
+    <button class="btn btn-success" onclick="exportPoliciesToFile()">Export policies.json file</button>
+    <input id='importconfigfile' type='file' onchange="importConfigFromFile(this)" hidden/>
+    <input id='importpoliciesfile' type='file' onchange="importPoliciesFromFile(this)" hidden/>
+  </div>
 </div>
   
   
@@ -75,14 +84,9 @@
       <input type="button" value='Add "unless"' onclick="addExceptCondition()" class="fadeIn">
     </div>
     <br>
-    <input type="submit" class="fadein">
-
-    
-    
+    <input type="submit" name='submit' value='Save'>
+    <input type="button" value='Discard' onclick="discardChanges()">
   </form>
-  <div id="resultdiv">
-    
-  </div>
 </div>
 
 
