@@ -28,8 +28,8 @@ const conditionArrays = {
 
 
 
-function editPolicy(el){
-  openPolicyEditingForm(getInd(el));
+function editPolicy(el,b){
+  openPolicyEditingForm(getInd(el),b);
 }
 function deletePolicy(el){
   let warning = "Are you sure you want to delete this policy?\n\n";
@@ -43,7 +43,7 @@ function deletePolicy(el){
 function newPolicy(){
   let newEl = document.createElement("DIV");
   newEl.classList.add("policyContainer");
-  newEl.innerHTML = '<div class="card bg-info text-white"><div class="card-body"><div style="float:left">[loading policy text...]</div><div style="float:right"><button class="btn btn-warning" onclick="editPolicy(this.parentElement.parentElement.parentElement.parentElement)">Edit</button> <button class="btn btn-warning" onclick="deletePolicy(this.parentElement.parentElement.parentElement.parentElement)">Delete</button></div></div></div><br>';
+  newEl.innerHTML = '<div class="card bg-info text-white"><div class="card-body"><div style="float:left;width:calc(100% - 135px);">[loading policy text...]</div><div style="float:right"><button class="btn btn-warning" onclick="editPolicy(this.parentElement.parentElement.parentElement.parentElement)">Edit</button> <button class="btn btn-warning" onclick="deletePolicy(this.parentElement.parentElement.parentElement.parentElement)">Delete</button></div></div></div><br>';
   document.getElementById("menusectionpolicylist").append(newEl);
   
   policies.push({
@@ -53,7 +53,7 @@ function newPolicy(){
     actionTree:[{name:""}],
     conditionTree:[{name:""},{name:""}]
   });
-  editPolicy(newEl);
+  editPolicy(newEl,true);
 }
 
 function getInd(el){
@@ -87,19 +87,31 @@ function updatePolicyFromTrees(){
   document.getElementsByClassName("policyContainer")[currentIndex].children[0].children[0].children[0].innerText = str;
 }
 
-function openPolicyEditingForm(ind){
+function openPolicyEditingForm(ind,newForm){
   document.getElementById("menusection").style.display = "none";
   document.getElementById("buildersection").style.display = "block";
-  
-  //reconstruct form 
-  let form1 = document.getElementById("form1");
-  form1.policyname.value = policies[ind].policyname;
-  form1.allowdeny.selectedIndex = policies[ind].allowdeny;
-  
-  
-  
-  
   currentIndex = ind;
+  
+  if(!newForm){
+    //reconstruct form 
+    let form1 = document.getElementById("form1");
+    form1.policyname.value = policies[ind].policyname;
+    form1.allowdeny.selectedIndex = policies[ind].allowdeny;
+    if(policies[ind].actionTree[0].name==="") 
+      autoSetValue("a",0,"everything");
+    else
+      constructActionHTML(0,0);
+    
+    if(policies[ind].conditionTree[0].name!==""){
+      addOnlyIfCondition();
+      constructConditionHTML(0,0);
+    }
+    if(policies[ind].conditionTree[1].name!==""){
+      addExceptCondition();
+      constructConditionHTML(1,1);
+    }
+  }
+  
 }
 
 
@@ -119,10 +131,95 @@ function closePolicyEditingForm(){
 
 
 
+function autoSetValue(name,num,value){
+  let el = document.getElementById("form1")["input"+name+num];
+  el.value = value;
+  if(el.type==="select-one") 
+    el.onchange({srcElement:el});
+  else 
+    el.oninput();
+}
 
 
+function constructActionHTML(newind,treeind){
+  let tree = policies[currentIndex].actionTree;
+  switch(tree[treeind].name){
+    case "device":
+    case "command":
+    case "setting":
+      autoSetValue("a",newind,tree[treeind].name);
+      autoSetValue("a",newind,tree[treeind].value);
+      autoSetValue("a",actionTree[newind].c,tree[tree[treeind].c].value);
+      break;
+    case "and":
+    case "or":
+      autoSetValue("a",newind,tree[treeind].name);
+      constructActionHTML(actionTree[newind].c1,tree[treeind].c1);
+      constructActionHTML(actionTree[newind].c2,tree[treeind].c2);
+      break;
+    case "not":
+      autoSetValue("a",newind,tree[treeind].name);
+      constructActionHTML(actionTree[newind].c,tree[treeind].c);
+      break;
+  }
+}
 
+function constructConditionHTML(newind,treeind){
+  let tree = policies[currentIndex].conditionTree;
+  switch(tree[treeind].name){
+    //case "device":
+    //case "state":
+    //case "within":
+    case "automationunit":
+    case "time":
+    case "date":
+      autoSetValue("c",newind,tree[treeind].name);
+      autoSetValue("c",newind,tree[treeind].value);
+      autoSetValue("c",conditionTree[newind].c,tree[tree[treeind].c].value);
+      break;
+    case "devicestate":
+      autoSetValue("c",newind,tree[treeind].name);
+      autoSetValue("c",conditionTree[newind].c1,tree[tree[treeind].c1].value);
+      autoSetValue("c",conditionTree[newind].c2,tree[tree[treeind].c2].value);
+      autoSetValue("c",conditionTree[newind].c3,tree[tree[treeind].c3].value);
+      break;
+    case "devicevalue":
+      autoSetValue("c",newind,tree[treeind].name);
+      autoSetValue("c",newind,tree[treeind].value);
+      autoSetValue("c",conditionTree[newind].c1,tree[tree[treeind].c1].value);
+      autoSetValue("c",conditionTree[newind].c2,tree[tree[treeind].c2].value);
+      break;
+    case "since":
+      autoSetValue("c",newind,tree[treeind].name);
+      constructConditionHTML(conditionTree[newind].c1,tree[treeind].c1);
+      constructConditionHTML(conditionTree[newind].c2,tree[treeind].c2);
+      constructWithinHTML(   conditionTree[newind].c3,tree[treeind].c3);
+      break;
+    case "once":
+    case "lastly":
+      autoSetValue("c",newind,tree[treeind].name);
+      constructConditionHTML(conditionTree[newind].c1,tree[treeind].c1);
+      constructWithinHTML(   conditionTree[newind].c2,tree[treeind].c2);
+      break;
+    case "and":
+    case "or":
+      autoSetValue("c",newind,tree[treeind].name);
+      constructConditionHTML(conditionTree[newind].c1,tree[treeind].c1);
+      constructConditionHTML(conditionTree[newind].c2,tree[treeind].c2);
+      break;
+    case "not":
+      autoSetValue("c",newind,tree[treeind].name);
+      constructConditionHTML(conditionTree[newind].c1,tree[treeind].c1);
+      break;
+  }
+}
 
+function constructWithinHTML(newind,treeind){
+  let node = policies[currentIndex].conditionTree[treeind];
+  let els = document.getElementById("form1")["inputc"+newind];
+  els[0].value = node.value1; els[0].oninput();
+  els[1].value = node.value2; els[1].oninput();
+}
 
 
 
@@ -190,8 +287,8 @@ function invertDate(d){
 
 
 
-function createSelectionStr(str,a,ar){
-  let f = '<span>'+str+'<select onchange="'+a+'.value=this.value" required>'+
+function createSelectionStr(str,a,name,ar){
+  let f = '<span>'+str+'<select name="'+name+'" onchange="'+a+'.value=this.value" required>'+
             '<option value=""></option>';
   ar.forEach(s=> f+='<option value="'+s+'">'+s+'</option>');
   f+='</select></span>';
@@ -201,7 +298,7 @@ function createSelectionStr(str,a,ar){
 
 let actionStr = {
 
-      begin: '<select required onchange="actionChangeHandler(event,0)">'+
+      begin: '<select required name="inputa0" onchange="actionChangeHandler(event,0)">'+
                     '<option value=""></option>'+
                     '<option value="everything">everything</option>'+
                     '<option value="device">device is/isn\'t</option>'+
@@ -212,7 +309,7 @@ let actionStr = {
                     '<option value="not">not ____ </option>'+
                  '</select>',
                         
-      general: function(a){return '<select required onchange="actionChangeHandler(event,'+a+')">'+
+      general: function(a){return '<select required name="inputa'+a+'" onchange="actionChangeHandler(event,'+a+')">'+
                     '<option value=""></option>'+
                     '<option value="device">device is</option>'+
                     '<option value="command">command is</option>'+
@@ -226,22 +323,26 @@ let actionStr = {
 actionStr.isisnot = function(a){
   actionTree[a].name = "isisnot";
   actionTree[a].value = " = ";
-  return " <select onchange='actionTree["+a+"].value=this.value'><option value=' = '>is</option><option value=' != '>is not</option></select> ";
+  let name = "inputa"+a;
+  return " <select name='"+name+"' onchange='actionTree["+a+"].value=this.value'><option value=' = '>is</option><option value=' != '>is not</option></select> ";
 };
 actionStr.device  = function(a){
   actionTree[a].name = "device";
   let b = actionTree[a].c = pushAction();
-  return createSelectionStr("device"+actionStr.isisnot(b),"actionTree["+a+"]",actionArrays.devices);
+  let name = "inputa"+a;
+  return createSelectionStr("device"+actionStr.isisnot(b),"actionTree["+a+"]",name,actionArrays.devices);
 };
 actionStr.command = function(a){
   actionTree[a].name = "command";
   let b = actionTree[a].c = pushAction();
-  return createSelectionStr("command"+actionStr.isisnot(b),"actionTree["+a+"]",actionArrays.commands);
+  let name = "inputa"+a;
+  return createSelectionStr("command"+actionStr.isisnot(b),"actionTree["+a+"]",name,actionArrays.commands);
 };
 actionStr.setting = function(a){
   actionTree[a].name = "setting";
   let b = actionTree[a].c = pushAction();
-  return createSelectionStr("setting"+actionStr.isisnot(b),"actionTree["+a+"]",actionArrays.settings);
+  let name = "inputa"+a;
+  return createSelectionStr("setting"+actionStr.isisnot(b),"actionTree["+a+"]",name,actionArrays.settings);
 };
                         
 actionStr.and = function(a){
@@ -310,7 +411,7 @@ function clearAction(){
 
 
 let conditionStr = {
-    general: function(a){return '<select required onchange="conditionChangeHandler(event,'+a+')">'+
+    general: function(a){return '<select name="inputc'+a+'" required onchange="conditionChangeHandler(event,'+a+')">'+
        '<option value=""></option>'+
        '<option value="automationunit">automation unit is/isn\'t</option>'+
        '<option value="devicestate">State of [device] is/is\'t [state]</option>'+
@@ -329,29 +430,35 @@ let conditionStr = {
 conditionStr.isisnot = function(a){
   conditionTree[a].name = "isisnot";
   conditionTree[a].value = " = ";
-  return " <select onchange='conditionTree["+a+"].value=this.value'><option value=' = '>is</option><option value=' != '>is not</option></select> ";
+  let name = "inputc"+a;
+  return " <select name='"+name+"' onchange='conditionTree["+a+"].value=this.value'><option value=' = '>is</option><option value=' != '>is not</option></select> ";
 };
 conditionStr.device = function(a){
   conditionTree[a].name = "device";
-  return createSelectionStr("","conditionTree["+a+"]",conditionArrays.devices);
+  let name = "inputc"+a;
+  return createSelectionStr("","conditionTree["+a+"]",name,conditionArrays.devices);
 };
 conditionStr.state = function(a){
   conditionTree[a].name = "state";
-  return createSelectionStr("","conditionTree["+a+"]",conditionArrays.states);
+  let name = "inputc"+a;
+  return createSelectionStr("","conditionTree["+a+"]",name,conditionArrays.states);
 };
 conditionStr.within = function(a){
   conditionTree[a].name = "within";
-  return " between <input type='number' class='numinput' oninput='conditionTree["+a+"].value1=this.value' required> "+
-         "and <input type='number' class='numinput' oninput='conditionTree["+a+"].value2=this.value' required> seconds ago";
+  let name = "inputc"+a;
+  return " between <input name='"+name+"' type='number' class='numinput' oninput='conditionTree["+a+"].value1=this.value' required> "+
+         "and <input name='"+name+"' type='number' class='numinput' oninput='conditionTree["+a+"].value2=this.value' required> seconds ago";
 };
 conditionStr.operators = function(a){
   conditionTree[a].name = "operators";
-  return createSelectionStr("","conditionTree["+a+"]",[" = "," &#x2260; "," &gt; "," &#x2265; "," &lt; "," &#x2264; "]);
+  let name = "inputc"+a;
+  return createSelectionStr("","conditionTree["+a+"]",name,[" = "," &#x2260; "," &gt; "," &#x2265; "," &lt; "," &#x2264; "]);
 };
 conditionStr.automationunit = function(a){
   conditionTree[a].name = "automationunit";
   let b = conditionTree[a].c = pushCondition();
-  return createSelectionStr("automation unit"+conditionStr.isisnot(b),"conditionTree["+a+"]",conditionArrays.automationunits);
+  let name = "inputc"+a;
+  return createSelectionStr("automation unit"+conditionStr.isisnot(b),"conditionTree["+a+"]",name,conditionArrays.automationunits);
 };
 conditionStr.devicestate = function(a){
   conditionTree[a].name = "devicestate";
@@ -364,20 +471,23 @@ conditionStr.devicevalue = function(a){
   conditionTree[a].name = "devicevalue";
   let b1 = conditionTree[a].c1 = pushCondition();
   let b2 = conditionTree[a].c2 = pushCondition();
+  let name = "inputc"+a;
   return '<span>Value of <span>'+conditionStr.device(b1)+'</span> '+conditionStr.operators(b2)+
-      " <input type='number' class='numinput' oninput='conditionTree["+a+"].value=this.value' required></span>";
+      " <input name='"+name+"' type='number' class='numinput' oninput='conditionTree["+a+"].value=this.value' required></span>";
 };
 conditionStr.time = function(a){
   conditionTree[a].name = "time";
   let b = conditionTree[a].c = pushCondition();
+  let name = "inputc"+a;
   return "<span>Time "+conditionStr.operators(b)+
-        " <input type='time' class='numinput' oninput='conditionTree["+a+"].value=this.value' required></span>";
+        " <input name='"+name+"' type='time' class='numinput' oninput='conditionTree["+a+"].value=this.value' required></span>";
 };
 conditionStr.date = function(a){
   conditionTree[a].name = "date";
   let b = conditionTree[a].c = pushCondition();
+  let name = "inputc"+a;
   return "<span>Date "+conditionStr.operators(b)+
-        " <input type='date' class='numinput' oninput='conditionTree["+a+"].value=this.value' required></span>";
+        " <input name='"+name+"' type='date' class='numinput' oninput='conditionTree["+a+"].value=this.value' required></span>";
 };
 
 conditionStr.since = function(a){
