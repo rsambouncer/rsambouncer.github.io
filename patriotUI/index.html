@@ -47,8 +47,9 @@
     <button class="btn btn-success" onclick="document.getElementById('importconfigfile').click()">Import config.json file</button> 
     <button class="btn btn-success" onclick="document.getElementById('importpoliciesfile').click()">Import policies.json file</button> 
     <button class="btn btn-success" onclick="exportPoliciesToFile()">Export policies.json file</button>
-    <input id='importconfigfile' type='file' onchange="importConfigFromFile(this)" hidden/>
-    <input id='importpoliciesfile' type='file' onchange="importPoliciesFromFile(this)" hidden/>
+    <input id='importconfigfile' type='file' onchange="importFromFile(this.files,setConfigFromFileData)" hidden/>
+    <input id='importpoliciesfile' type='file' onchange="importFromFile(this.files,setPoliciesFromFileData)" hidden/>
+    <a id="exportpoliciesfile" hidden></a>
   </div>
 </div>
   
