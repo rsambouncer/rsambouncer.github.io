@@ -4,6 +4,7 @@
 const policies = [];
 
 let currentIndex = -1;
+let currentIsNew = false;
 let actionTree = [{name:""}];
 let conditionTree = [{name:""},{name:""}];
 //during an edit, index will refer to policies list,
@@ -24,6 +25,23 @@ const conditionArrays = {
 };
 
 
+
+
+
+
+function importConfigFromFile(el){
+  console.log(el.files);
+  alert("This feature doesn't work as of right now");
+}
+
+function importPoliciesFromFile(el){
+  console.log(el.files);
+  alert("This feature doesn't work as of right now");
+}
+
+function exportPoliciesToFile(){
+  alert("This feature doesn't work as of right now");
+}
 
 
 
@@ -91,6 +109,7 @@ function openPolicyEditingForm(ind,newForm){
   document.getElementById("menusection").style.display = "none";
   document.getElementById("buildersection").style.display = "block";
   currentIndex = ind;
+  currentIsNew = newForm?true:false; //newform parameter might be absent
   
   if(!newForm){
     //reconstruct form 
@@ -118,6 +137,7 @@ function openPolicyEditingForm(ind,newForm){
 function closePolicyEditingForm(){
   document.getElementById("buildersection").style.display = "none";
   document.getElementById("menusection").style.display = "block";
+  currentIsNew = false;
   currentIndex = -1;
   actionTree = [{name:""}];
   conditionTree = [{name:""},{name:""}];
@@ -167,9 +187,6 @@ function constructActionHTML(newind,treeind){
 function constructConditionHTML(newind,treeind){
   let tree = policies[currentIndex].conditionTree;
   switch(tree[treeind].name){
-    //case "device":
-    //case "state":
-    //case "within":
     case "automationunit":
     case "time":
     case "date":
@@ -257,7 +274,7 @@ function constructConditionCode(a){ //a=0, only if. a=1, except.
     case "isisnot": return node.value;
     case "device": return node.value;
     case "state": return node.value;
-    case "within": return "WITHIN ["+node.value1+", "+node.value2+"]";
+    case "within": return "WITHIN ["+(node.value1<node.value2?(node.value1+", "+node.value2):(node.value2+", "+node.value1))+"]";
     case "operators": return node.value;
     case "automationunit": return "automation_unit"+conditionTree[node.c].value+node.value;
     case "devicestate": return "state("+conditionTree[node.c1].value+")"+conditionTree[node.c2].value+conditionTree[node.c3].value;
@@ -446,8 +463,8 @@ conditionStr.state = function(a){
 conditionStr.within = function(a){
   conditionTree[a].name = "within";
   let name = "inputc"+a;
-  return " between <input name='"+name+"' type='number' class='numinput' oninput='conditionTree["+a+"].value1=this.value' required> "+
-         "and <input name='"+name+"' type='number' class='numinput' oninput='conditionTree["+a+"].value2=this.value' required> seconds ago";
+  return " between <input name='"+name+"' type='number' min='0' class='numinput' oninput='conditionTree["+a+"].value1=this.value' required> "+
+         "and <input name='"+name+"' type='number' min='0' class='numinput' oninput='conditionTree["+a+"].value2=this.value' required> seconds ago";
 };
 conditionStr.operators = function(a){
   conditionTree[a].name = "operators";
@@ -572,6 +589,20 @@ function conditionChangeHandler(e,a){
 
 
 
+function discardChanges(){
+  if(currentIsNew){ 
+    if(confirm("Discard policy?")){
+      policies.pop(); //new will always be last
+      let plist = document.getElementById("menusectionpolicylist");
+      plist.removeChild(plist.lastChild);
+      closePolicyEditingForm();
+    }
+  }else{
+    if(confirm("Discard changes?")){
+      closePolicyEditingForm();
+    }
+  }
+}
 
 let form1 = document.getElementById("form1");
 form1.onsubmit = function(e){
