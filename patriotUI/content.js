@@ -106,8 +106,6 @@ function getInd(el){
 }
 
 
-
-
 function updatePolicyFromTrees(){
   //given: policy trees are now set
   //so we need to update object, and the element text
@@ -143,6 +141,7 @@ function updatePolicyFromTrees(){
   };
   document.getElementsByClassName("policyContainer")[currentIndex].children[0].children[0].children[0].innerHTML = str2;
 }
+
 
 function openPolicyEditingForm(ind,newForm){
   document.getElementById("menusection").style.display = "none";
@@ -354,9 +353,9 @@ function constructActionLanguage(a){
   let recurse = constructActionLanguage;
   switch(node.name){
     case "isisnot": return node.value===' = '?" is ":" is not ";
-    case "device": return "action_device"+recurse(node.c)+node.value;
-    case "command": return "action_command"+recurse(node.c)+node.value;
-    case "setting": return "action_command_arg"+recurse(node.c)+node.value;
+    case "device": return "device"+recurse(node.c)+node.value;
+    case "command": return "command"+recurse(node.c)+node.value;
+    case "setting": return "command input"+recurse(node.c)+node.value;
     case "and": return "("+recurse(node.c1)+") and ("+recurse(node.c2)+")";
     case "or": return "("+recurse(node.c1)+") or ("+recurse(node.c2)+")";
     case "not": return "everything except ("+recurse(node.c)+")";
@@ -373,7 +372,7 @@ function constructConditionLanguage(a){
     case "state": return node.value;
     case "within": return "between "+(node.value1<node.value2?(node.value1+" and "+node.value2):(node.value2+" and "+node.value1))+" seconds ago";
     case "operators": return node.value;
-    case "automationunit": return "automation_unit"+recurse(node.c)+node.value;
+    case "automationunit": return "automation unit"+recurse(node.c)+node.value;
     case "devicestate": return "state of "+recurse(node.c1)+recurse(node.c2)+recurse(node.c3);
     case "devicevalue": return "value of "+recurse(node.c1)+recurse(node.c2)+node.value;
     case "time": return "time"+recurse(node.c)+node.value;
@@ -702,6 +701,12 @@ form1.onsubmit = function(e){
     e.preventDefault();
     return;
   }
+  if(isDuplicateName(form1.policyname.value,-1)){
+    //form1.policyname.value = addNumberOnDuplicateName(form1.policyname.value);
+    alert("Duplicate name. Please enter a unique policy name.");
+    e.preventDefault();
+    return;
+  }
   
   updatePolicyFromTrees();
   closePolicyEditingForm();
@@ -712,7 +717,11 @@ function checkPolicyName(str){
   if(str.length===0) return false;
   if(!isLetter(str.charAt(0))) return false;
   for(let a=0;a<str.length;a++)
-    if(!(isLetter(str.charAt(a))||isDigit(str.charAt(a))))
+    if(!(
+      isLetter(str.charAt(a))||
+      isDigit(str.charAt(a))||
+      isAllowedSpecialChar(str.charAt(a))
+    ))
       return false;
   return true;
 }
@@ -723,12 +732,32 @@ function isLetter(c){
 function isDigit(c){
   return c>='0'&&c<='9';
 }
+function isAllowedSpecialChar(c){
+  return "-_$#@^&?".indexOf(c)>=0;
+}
 
+function isDuplicateName(name,except){
+    for(let a=0;a<policies.length;a++)
+      if(a!==except&&name===policies[a].policyname) return true;
+    return false;
+}
 
-
-
-
-
+function addNumberOnDuplicateName(name){
+    let n = name.lastIndexOf("_");
+    if(n=== -1) return name+"_1";
+    let str = name.substring(n+1);
+    let b = true;
+    for(let a=0;a<str.length;a++)
+      if(!isDigit(str[a])) b = false;
+    
+    if(b){
+      let num = parseInt(str);
+      while(isDuplicateName(name.substring(0,n+1)+num,-1)) num++;
+      return name.substring(0,n+1)+num;
+    }
+    else return name+"_1";
+    
+}
 
 
 
