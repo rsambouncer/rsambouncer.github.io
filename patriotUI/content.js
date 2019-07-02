@@ -33,8 +33,8 @@ function setConfigFromFileData(json){
 
 function setPoliciesFromFileData(json){
   for(let a=0;a<json.length;a++){
-    policies[a] = json[a];
-    createPolicyElement().children[0].children[0].children[0].innerText = json[a].text;
+    policies.push(json[a]);
+    createPolicyElement().children[0].children[0].children[0].innerHTML = json[a].text;
   }
 }
 
@@ -112,22 +112,36 @@ function updatePolicyFromTrees(){
   //given: policy trees are now set
   //so we need to update object, and the element text
   let form1 = document.getElementById("form1");
-  let str = "POLICY "+form1.policyname.value+":\n";
+  
+  //UPL string
+  let str1 = "POLICY "+form1.policyname.value+":\n";
   let actionCode = constructActionCode(0);
-  str+=form1.allowdeny.value+" "+(actionCode===""?"EVERYTHING":actionCode)+"\n";
+  str1+=form1.allowdeny.value+" "+(actionCode===""?"EVERYTHING":actionCode);
   if(conditionTree[0].name!=="") 
-    str+="ONLY IF "+constructConditionCode(0)+"\n";
+    str1+="\nONLY IF "+constructConditionCode(0);
   if(conditionTree[1].name!=="")
-    str+="EXCEPT "+constructConditionCode(1);
+    str1+="\nEXCEPT "+constructConditionCode(1);
+  
+  //natural language string
+  let str2 = "<p class='font-weight-bold'>Policy: "+form1.policyname.value+"</p>";
+  let actionL = constructActionLanguage(0);
+  str2+= "<p>"+(form1.allowdeny.value==="ALLOW"?"Allow":"Deny")+" "+(actionL===""?"everything":actionL);
+  if(conditionTree[0].name!=="") 
+    str2+="<br>Only if "+constructConditionLanguage(0);
+  if(conditionTree[1].name!=="")
+    str2+="<br>Unless "+constructConditionLanguage(1);
+  str2+="</p>";
+  
   
   policies[currentIndex] = {
-    text:str,
+    text:str2,
+    upl:str1,
     policyname:form1.policyname.value,
     allowdeny:form1.allowdeny.selectedIndex,
     actionTree:actionTree,
     conditionTree:conditionTree
   };
-  document.getElementsByClassName("policyContainer")[currentIndex].children[0].children[0].children[0].innerText = str;
+  document.getElementsByClassName("policyContainer")[currentIndex].children[0].children[0].children[0].innerHTML = str2;
 }
 
 function openPolicyEditingForm(ind,newForm){
@@ -251,7 +265,7 @@ function constructConditionHTML(newind,treeind){
       break;
     case "not":
       autoSetValue("c",newind,tree[treeind].name);
-      constructConditionHTML(conditionTree[newind].c1,tree[treeind].c1);
+      constructConditionHTML(conditionTree[newind].c,tree[treeind].c);
       break;
   }
 }
@@ -281,37 +295,39 @@ function pushCondition(){
 
 function constructActionCode(a){
   let node = actionTree[a];
+  let recurse = constructActionCode;
   switch(node.name){
     case "isisnot": return node.value;
-    case "device": return "action_device"+actionTree[node.c].value+node.value;
-    case "command": return "action_command"+actionTree[node.c].value+node.value;
-    case "setting": return "action_command_arg"+actionTree[node.c].value+node.value;
-    case "and": return "("+constructActionCode(node.c1)+") AND ("+constructActionCode(node.c2)+")";
-    case "or": return "("+constructActionCode(node.c1)+") OR ("+constructActionCode(node.c2)+")";
-    case "not": return "NOT ("+constructActionCode(node.c)+")";
+    case "device": return "action_device"+recurse(node.c)+node.value;
+    case "command": return "action_command"+recurse(node.c)+node.value;
+    case "setting": return "action_command_arg"+recurse(node.c)+node.value;
+    case "and": return "("+recurse(node.c1)+") AND ("+recurse(node.c2)+")";
+    case "or": return "("+recurse(node.c1)+") OR ("+recurse(node.c2)+")";
+    case "not": return "NOT ("+recurse(node.c)+")";
     default: return "";
   }
 }
 
 function constructConditionCode(a){ //a=0, only if. a=1, except.
   let node = conditionTree[a];
+  let recurse = constructConditionCode;
   switch(conditionTree[a].name){
     case "isisnot": return node.value;
     case "device": return node.value;
     case "state": return node.value;
     case "within": return "WITHIN ["+(node.value1<node.value2?(node.value1+", "+node.value2):(node.value2+", "+node.value1))+"]";
-    case "operators": return node.value;
-    case "automationunit": return "automation_unit"+conditionTree[node.c].value+node.value;
-    case "devicestate": return "state("+conditionTree[node.c1].value+")"+conditionTree[node.c2].value+conditionTree[node.c3].value;
-    case "devicevalue": return "state("+conditionTree[node.c1].value+")"+conditionTree[node.c2].value+node.value;
-    case "time": return "current_time"+conditionTree[node.c].value+node.value+":00";
-    case "date": return "current_date"+conditionTree[node.c].value+invertDate(node.value);
-    case "since": return "SINCE("+constructConditionCode(node.c1)+", "+constructConditionCode(node.c2)+") "+constructConditionCode(node.c3);
-    case "once": return "ONCE("+constructConditionCode(node.c1)+") "+constructConditionCode(node.c2);
-    case "lastly": return "LASTLY("+constructConditionCode(node.c1)+") "+constructConditionCode(node.c2);
-    case "and": return "("+constructConditionCode(node.c1)+") AND ("+constructConditionCode(node.c2)+")";
-    case "or": return "("+constructConditionCode(node.c1)+") OR ("+constructConditionCode(node.c2)+")";
-    case "not": return "NOT ("+constructConditionCode(node.c)+")";
+    case "operators": return translateOperators(node.value);
+    case "automationunit": return "automation_unit"+recurse(node.c)+node.value;
+    case "devicestate": return "state("+recurse(node.c1)+")"+recurse(node.c2)+recurse(node.c3);
+    case "devicevalue": return "state("+recurse(node.c1)+")"+recurse(node.c2)+node.value;
+    case "time": return "current_time"+recurse(node.c)+node.value+":00";
+    case "date": return "current_date"+recurse(node.c)+invertDate(node.value);
+    case "since": return "SINCE("+recurse(node.c1)+", "+recurse(node.c2)+") "+recurse(node.c3);
+    case "once": return "ONCE("+recurse(node.c1)+") "+recurse(node.c2);
+    case "lastly": return "LASTLY("+recurse(node.c1)+") "+recurse(node.c2);
+    case "and": return "("+recurse(node.c1)+") AND ("+recurse(node.c2)+")";
+    case "or": return "("+recurse(node.c1)+") OR ("+recurse(node.c2)+")";
+    case "not": return "NOT ("+recurse(node.c)+")";
     default: return "";
   }
 }
@@ -321,6 +337,56 @@ function invertDate(d){
   return ar[1]+"-"+ar[2]+"-"+ar[0];
 }
 
+function translateOperators(d){
+  switch(d.substring(1,2)){
+    case "=":                         return " = ";
+    case String.fromCharCode(0x2260): return " != ";
+    case ">":                         return " > ";
+    case String.fromCharCode(0x2265): return " >= ";
+    case "<":                         return " < ";
+    case String.fromCharCode(0x2264): return " <= ";
+  }
+}
+
+
+function constructActionLanguage(a){
+  let node = actionTree[a];
+  let recurse = constructActionLanguage;
+  switch(node.name){
+    case "isisnot": return node.value===' = '?" is ":" is not ";
+    case "device": return "action_device"+recurse(node.c)+node.value;
+    case "command": return "action_command"+recurse(node.c)+node.value;
+    case "setting": return "action_command_arg"+recurse(node.c)+node.value;
+    case "and": return "("+recurse(node.c1)+") and ("+recurse(node.c2)+")";
+    case "or": return "("+recurse(node.c1)+") or ("+recurse(node.c2)+")";
+    case "not": return "everything except ("+recurse(node.c)+")";
+    default: return "";
+  }
+}
+
+function constructConditionLanguage(a){
+  let node = conditionTree[a];
+  let recurse = constructConditionLanguage;
+  switch(conditionTree[a].name){
+    case "isisnot": return node.value===' = '?" is ":" is not ";
+    case "device": return node.value;
+    case "state": return node.value;
+    case "within": return "between "+(node.value1<node.value2?(node.value1+" and "+node.value2):(node.value2+" and "+node.value1))+" seconds ago";
+    case "operators": return node.value;
+    case "automationunit": return "automation_unit"+recurse(node.c)+node.value;
+    case "devicestate": return "state of "+recurse(node.c1)+recurse(node.c2)+recurse(node.c3);
+    case "devicevalue": return "value of "+recurse(node.c1)+recurse(node.c2)+node.value;
+    case "time": return "time"+recurse(node.c)+node.value;
+    case "date": return "date"+recurse(node.c)+node.value;
+    case "since": return "since ("+recurse(node.c1)+") then ("+recurse(node.c2)+") "+recurse(node.c3);
+    case "once": return "("+recurse(node.c1)+") happened "+recurse(node.c2);
+    case "lastly": return "("+recurse(node.c1)+") last happened "+recurse(node.c2);
+    case "and": return "("+recurse(node.c1)+") and ("+recurse(node.c2)+")";
+    case "or": return "("+recurse(node.c1)+") or ("+recurse(node.c2)+")";
+    case "not": return "("+recurse(node.c)+") is not true";
+    default: return "";
+  }
+}
 
 
 
@@ -348,7 +414,7 @@ let actionStr = {
                     '<option value="setting">setting is/isn\'t</option>'+
                     '<option value="and">____ and _____</option>'+
                     '<option value="or">____ or _____</option>'+
-                    '<option value="not">not ____ </option>'+
+                    '<option value="not">everything except ____</option>'+
                  '</select>',
                         
       general: function(a){return '<select required name="inputa'+a+'" onchange="actionChangeHandler(event,'+a+')">'+
@@ -358,7 +424,7 @@ let actionStr = {
                     '<option value="setting">setting is</option>'+
                     '<option value="and">____ and _____</option>'+
                     '<option value="or">____ or _____</option>'+
-                    '<option value="not">not ____ </option>'+
+                    '<option value="not">everything except ____</option>'+
                  '</select>'}
 };
                   
@@ -402,7 +468,7 @@ actionStr.or  = function(a){
 actionStr.not = function(a){
   actionTree[a].name = "not";
   let b = actionTree[a].c = pushAction();
-  return '<span class="spanbox"> not <span>'+actionStr.general(b)+'</span></span>';
+  return '<span class="spanbox">everything except <span>'+actionStr.general(b)+'</span></span>';
 };
 
 
@@ -465,7 +531,7 @@ let conditionStr = {
        '<option value="lastly"> _______ last happened within [times]</option>'+
        '<option value="or">____ or _____</option>'+
        '<option value="and">____ and _____</option>'+
-       '<option value="not">not ____ </option>'+
+       '<option value="not">____ is not true</option>'+
     '</select>';}
 };
 
@@ -567,7 +633,7 @@ conditionStr.or  = function(a){
 conditionStr.not = function(a){
   conditionTree[a].name = "not";
   let b = conditionTree[a].c = pushCondition();
-  return '<span class="spanbox"> not <span>'+conditionStr.general(b)+'</span></span>';
+  return '<span class="spanbox"><span>'+conditionStr.general(b)+'</span> is not true</span>';
 };
 
 
