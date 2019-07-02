@@ -14,8 +14,7 @@ let conditionTree = [{name:""},{name:""}];
 
 let actionArrays = {
   devices:["door1","door2","door3","door4"],
-  commands:["on","off","open","close"],
-  settings:["s1","s2","s3","s4"]
+  commands:["on","off","open","close"]
 };
 
 let conditionArrays = {
@@ -204,10 +203,14 @@ function constructActionHTML(newind,treeind){
   switch(tree[treeind].name){
     case "device":
     case "command":
-    case "setting":
       autoSetValue("a",newind,tree[treeind].name);
       autoSetValue("a",newind,tree[treeind].value);
       autoSetValue("a",actionTree[newind].c,tree[tree[treeind].c].value);
+      break;
+    case "setting":
+      autoSetValue("a",newind,tree[treeind].name);
+      autoSetValue("a",actionTree[newind].c1,tree[tree[treeind].c1].value);
+      constructValuechoice(actionTree[newind].c2,tree[treeind].c2);
       break;
     case "and":
     case "or":
@@ -276,7 +279,13 @@ function constructWithinHTML(newind,treeind){
   els[1].value = node.value2; els[1].oninput();
 }
 
-
+function constructValuechoice(newind,treeind){
+  let node = policies[currentIndex].actionTree[treeind];
+  let el = document.getElementById("form1")["inputa"+newind];
+  el.value = node.value1; el.onchange();
+  el = document.getElementById("form1")["inputa"+newind];
+  el.value = node.value2; (el.onchange||el.oninput)();
+}
 
 
 
@@ -297,9 +306,11 @@ function constructActionCode(a){
   let recurse = constructActionCode;
   switch(node.name){
     case "isisnot": return node.value;
+    case "operators": return translateOperators(node.value);
+    case "valuechoice": return (node.value1==="time"?node.value2+":00":node.value1==="date"?invertDate(node.value2):node.value2);
     case "device": return "action_device"+recurse(node.c)+node.value;
     case "command": return "action_command"+recurse(node.c)+node.value;
-    case "setting": return "action_command_arg"+recurse(node.c)+node.value;
+    case "setting": return "action_command_arg"+recurse(node.c1)+recurse(node.c2);
     case "and": return "("+recurse(node.c1)+") AND ("+recurse(node.c2)+")";
     case "or": return "("+recurse(node.c1)+") OR ("+recurse(node.c2)+")";
     case "not": return "NOT ("+recurse(node.c)+")";
@@ -353,9 +364,11 @@ function constructActionLanguage(a){
   let recurse = constructActionLanguage;
   switch(node.name){
     case "isisnot": return node.value===' = '?" is ":" is not ";
+    case "operators": return node.value;
+    case "valuechoice": return node.value2;
     case "device": return "device"+recurse(node.c)+node.value;
     case "command": return "command"+recurse(node.c)+node.value;
-    case "setting": return "command input"+recurse(node.c)+node.value;
+    case "setting": return "command input"+recurse(node.c1)+recurse(node.c2);
     case "and": return "("+recurse(node.c1)+") and ("+recurse(node.c2)+")";
     case "or": return "("+recurse(node.c1)+") or ("+recurse(node.c2)+")";
     case "not": return "everything except ("+recurse(node.c)+")";
@@ -410,7 +423,7 @@ let actionStr = {
                     '<option value="everything">everything</option>'+
                     '<option value="device">device is/isn\'t</option>'+
                     '<option value="command">command is/isn\'t</option>'+
-                    '<option value="setting">setting is/isn\'t</option>'+
+                    '<option value="setting">command input is</option>'+
                     '<option value="and">____ and _____</option>'+
                     '<option value="or">____ or _____</option>'+
                     '<option value="not">everything except ____</option>'+
@@ -420,7 +433,7 @@ let actionStr = {
                     '<option value=""></option>'+
                     '<option value="device">device is</option>'+
                     '<option value="command">command is</option>'+
-                    '<option value="setting">setting is</option>'+
+                    '<option value="setting">command input is</option>'+
                     '<option value="and">____ and _____</option>'+
                     '<option value="or">____ or _____</option>'+
                     '<option value="not">everything except ____</option>'+
@@ -433,6 +446,26 @@ actionStr.isisnot = function(a){
   let name = "inputa"+a;
   return " <select name='"+name+"' onchange='actionTree["+a+"].value=this.value'><option value=' = '>is</option><option value=' != '>is not</option></select> ";
 };
+
+actionStr.operators = function(a){
+  actionTree[a].name = "operators";
+  let name = "inputa"+a;
+  return createSelectionStr("","actionTree["+a+"]",name,[" = "," &#x2260; "," &gt; "," &#x2265; "," &lt; "," &#x2264; "]);
+};
+
+actionStr.valuechoice = function(a){
+  actionTree[a].name = "valuechoice";
+  let name = "inputa"+a;
+  return "<span><select name='"+name+"' onchange='actionStr.valuechoiceHandler(this,"+a+")' required><option value=''></option><option value='number'>number</option><option value='text'>text</option><option value='boolean'>true/false</option><option value='time'>time</option><option value='date'>date</option></select></span>"; 
+};
+
+actionStr.valuechoiceHandler = function(el,a){
+  actionTree[a].value1 = el.value;
+  el.parentElement.innerHTML = el.value==="boolean"?
+    ("<select name='"+el.name+"' onchange='actionTree["+a+"].value2=this.value' required><option value=''></option><option value='true'>true</option><option value=\"false\">false</option></select>"):
+    ("<input name='"+el.name+"' type='"+el.value+"' class='numinput' oninput='actionTree["+a+"].value2=this.value' required></span>");
+};
+
 actionStr.device  = function(a){
   actionTree[a].name = "device";
   let b = actionTree[a].c = pushAction();
@@ -447,9 +480,9 @@ actionStr.command = function(a){
 };
 actionStr.setting = function(a){
   actionTree[a].name = "setting";
-  let b = actionTree[a].c = pushAction();
-  let name = "inputa"+a;
-  return createSelectionStr("setting"+actionStr.isisnot(b),"actionTree["+a+"]",name,actionArrays.settings);
+  let b1 = actionTree[a].c1 = pushAction();
+  let b2 = actionTree[a].c2 = pushAction();
+  return "<span>command input "+actionStr.operators(b1)+" "+actionStr.valuechoice(b2)+"</span>";
 };
                         
 actionStr.and = function(a){
@@ -679,6 +712,16 @@ function conditionChangeHandler(e,a){
 
 
 
+
+
+
+
+
+
+
+
+
+
 function discardChanges(){
   if(currentIsNew){ 
     if(confirm("Discard policy?")){
@@ -701,7 +744,7 @@ form1.onsubmit = function(e){
     e.preventDefault();
     return;
   }
-  if(isDuplicateName(form1.policyname.value,-1)){
+  if(isDuplicateName(form1.policyname.value,currentIndex)){
     //form1.policyname.value = addNumberOnDuplicateName(form1.policyname.value);
     alert("Duplicate name. Please enter a unique policy name.");
     e.preventDefault();
