@@ -2,11 +2,15 @@
 
 
 const policies = [];
+let viewmodeUPL = false;
 
 let currentIndex = -1;
 let currentIsNew = false;
 let actionTree = [{name:""}];
+let athead = 0;
 let conditionTree = [{name:""},{name:""}];
+let cthead1 = 0;
+let cthead2 = 1;
 //during an edit, index will refer to policies list,
 //actionTree and conditionTree will both point to that object
 
@@ -33,7 +37,8 @@ function setConfigFromFileData(json){
 function setPoliciesFromFileData(json){
   for(let a=0;a<json.length;a++){
     policies.push(json[a]);
-    createPolicyElement().children[0].children[0].children[0].innerHTML = json[a].text;
+    createPolicyElement();
+    updatePolicyTextBox(policies.length-1,json[a].text,json[a].upl);
   }
 }
 
@@ -64,6 +69,24 @@ function exportPoliciesToFile(){
 
 
 
+function showPoliciesAsUPL(){
+  viewmodeUPL = true;
+  for(let a=0;a<policies.length;a++)
+    updatePolicyTextBox(a,policies[a].text,policies[a].upl);
+  document.getElementById("switchPolicyViewBtn").innerHTML = "Show Current Policies as Human-Readable Text";
+  document.getElementById("switchPolicyViewBtn").onclick = showPoliciesAsNL;
+}
+
+function showPoliciesAsNL(){
+  viewmodeUPL = false;
+  for(let a=0;a<policies.length;a++)
+    updatePolicyTextBox(a,policies[a].text,policies[a].upl);
+  document.getElementById("switchPolicyViewBtn").innerHTML = "Show Current Policies as UPL Strings";
+  document.getElementById("switchPolicyViewBtn").onclick = showPoliciesAsUPL;
+}
+
+showPoliciesAsNL();
+
 
 function editPolicy(el,b){
   openPolicyEditingForm(getInd(el),b);
@@ -86,6 +109,14 @@ function createPolicyElement(){
   return newEl;
 }
 
+function updatePolicyTextBox(ind, text, upl){
+  let el = document.getElementsByClassName("policyContainer")[ind].children[0].children[0].children[0];
+  
+  if(viewmodeUPL) el.innerText = upl;
+  else el.innerHTML = text;
+}
+
+
 function newPolicy(){
   let newEl = createPolicyElement();
   policies.push({
@@ -93,7 +124,10 @@ function newPolicy(){
     policyname:"",
     allowdeny:0,
     actionTree:[{name:""}],
-    conditionTree:[{name:""},{name:""}]
+    conditionTree:[{name:""},{name:""}],
+    athead:0,
+    cthead1:0,
+    cthead2:0
   });
   editPolicy(newEl,true);
 }
@@ -112,21 +146,21 @@ function updatePolicyFromTrees(){
   
   //UPL string
   let str1 = "POLICY "+form1.policyname.value+":\n";
-  let actionCode = constructActionCode(0);
+  let actionCode = constructActionCode(athead);
   str1+=form1.allowdeny.value+" "+(actionCode===""?"EVERYTHING":actionCode);
-  if(conditionTree[0].name!=="") 
-    str1+="\nONLY IF "+constructConditionCode(0);
-  if(conditionTree[1].name!=="")
-    str1+="\nEXCEPT "+constructConditionCode(1);
+  if(conditionTree[cthead1].name!=="") 
+    str1+="\nONLY IF "+constructConditionCode(cthead1);
+  if(conditionTree[cthead2].name!=="")
+    str1+="\nEXCEPT "+constructConditionCode(cthead2);
   
   //natural language string
   let str2 = "<p class='font-weight-bold'>Policy: "+form1.policyname.value+"</p>";
-  let actionL = constructActionLanguage(0);
+  let actionL = constructActionLanguage(athead);
   str2+= "<p>"+(form1.allowdeny.value==="ALLOW"?"Allow":"Deny")+" "+(actionL===""?"everything":actionL);
-  if(conditionTree[0].name!=="") 
-    str2+="<br>Only if "+constructConditionLanguage(0);
-  if(conditionTree[1].name!=="")
-    str2+="<br>Unless "+constructConditionLanguage(1);
+  if(conditionTree[cthead1].name!=="") 
+    str2+="<br>Only if "+constructConditionLanguage(cthead1);
+  if(conditionTree[cthead2].name!=="")
+    str2+="<br>Unless "+constructConditionLanguage(cthead2);
   str2+="</p>";
   
   
@@ -136,9 +170,12 @@ function updatePolicyFromTrees(){
     policyname:form1.policyname.value,
     allowdeny:form1.allowdeny.selectedIndex,
     actionTree:actionTree,
-    conditionTree:conditionTree
+    conditionTree:conditionTree,
+    athead:athead,
+    cthead1:cthead1,
+    cthead2:cthead2
   };
-  document.getElementsByClassName("policyContainer")[currentIndex].children[0].children[0].children[0].innerHTML = str2;
+  updatePolicyTextBox(currentIndex,str2,str1);
 }
 
 
@@ -153,18 +190,18 @@ function openPolicyEditingForm(ind,newForm){
     let form1 = document.getElementById("form1");
     form1.policyname.value = policies[ind].policyname;
     form1.allowdeny.selectedIndex = policies[ind].allowdeny;
-    if(policies[ind].actionTree[0].name==="") 
+    if(policies[ind].actionTree[policies[ind].athead].name==="") 
       autoSetValue("a",0,"everything");
     else
-      constructActionHTML(0,0);
+      constructActionHTML(0,policies[ind].athead);
     
-    if(policies[ind].conditionTree[0].name!==""){
+    if(policies[ind].conditionTree[policies[ind].cthead1].name!==""){
       addOnlyIfCondition();
-      constructConditionHTML(0,0);
+      constructConditionHTML(0,policies[ind].cthead1);
     }
-    if(policies[ind].conditionTree[1].name!==""){
+    if(policies[ind].conditionTree[policies[ind].cthead2].name!==""){
       addExceptCondition();
-      constructConditionHTML(1,1);
+      constructConditionHTML(1,policies[ind].cthead2);
     }
   }
   
@@ -174,12 +211,12 @@ function openPolicyEditingForm(ind,newForm){
 function closePolicyEditingForm(){
   document.getElementById("buildersection").style.display = "none";
   document.getElementById("menusection").style.display = "block";
-  currentIsNew = false;
-  currentIndex = -1;
-  actionTree = [{name:""}];
-  conditionTree = [{name:""},{name:""}];
   document.getElementById("form1").policyname.value = "";
   document.getElementById("form1").allowdeny.selectedIndex = 0;
+  currentIsNew = false;
+  currentIndex = -1;
+  actionTree = [];
+  conditionTree = [];
   clearAction();
   deleteOnlyIf();
   deleteExcept();
@@ -418,7 +455,7 @@ function createSelectionStr(str,a,name,ar){
 
 let actionStr = {
 
-      begin: '<select required name="inputa0" onchange="actionChangeHandler(event,0)">'+
+      begin: function(a){return '<select required name="inputa'+a+'" onchange="actionChangeHandler(event,'+a+');addAddButtons()">'+
                     '<option value=""></option>'+
                     '<option value="everything">everything</option>'+
                     '<option value="device">device is/isn\'t</option>'+
@@ -427,7 +464,7 @@ let actionStr = {
                     '<option value="and">____ and _____</option>'+
                     '<option value="or">____ or _____</option>'+
                     '<option value="not">everything except ____</option>'+
-                 '</select>',
+                 '</select>'},
                         
       general: function(a){return '<select required name="inputa'+a+'" onchange="actionChangeHandler(event,'+a+')">'+
                     '<option value=""></option>'+
@@ -504,7 +541,7 @@ actionStr.not = function(a){
 };
 
 
-document.getElementById("actionclause").children[1].innerHTML = actionStr.begin;
+document.getElementById("actionclause").children[1].innerHTML = actionStr.begin(athead);
 
 
 function actionChangeHandler(e,a){
@@ -522,14 +559,53 @@ function actionChangeHandler(e,a){
 }
 
 function clearAction(){
-  document.getElementById("actionclause").children[1].innerHTML = actionStr.begin;
-  actionTree[0] = {name:""};
+  athead = pushAction();
+  let aclauseEl = document.getElementById("actionclause");
+  aclauseEl.children[1].innerHTML = actionStr.begin(athead);
+  
+  let els = document.getElementsByClassName("addAddBtnA");
+  while(els.length>0) aclauseEl.removeChild(els[0]);
 }
 
+actionStr.addJoining = function(inp){
+  let a = pushAction();
+  actionTree[a].name = inp;
+  actionTree[a].c1 = athead;
+  let b2 = actionTree[a].c2 = pushAction();
+  let outerel = document.getElementById("actionouterspan");
+  let form1 = document.getElementById("form1");
+  
+  let elvalues = [];
+  for(let a=0;a<form1.length;a++)
+    if(form1[a].name&&form1[a].name.startsWith("inputa")) 
+      elvalues.push({name:form1[a].name,value:form1[a].value});
+  
+  outerel.innerHTML = '<span class="spanbox"><span>'+outerel.innerHTML+'</span> '+inp+' <span>'+actionStr.general(b2)+'</span></span>';
+  
+  for(let a=0;a<elvalues.length;a++) 
+    form1[elvalues[a].name].value = elvalues[a].value;
+  
+  athead = a;
+};
 
 
-
-
+function addAddButtons(){
+  if(document.getElementById("form1")["inputa"+athead]&&
+     document.getElementById("form1")["inputa"+athead].value === "everything") return;
+  
+  let b1 = document.createElement("INPUT");
+  b1.type = "button"; b1.classList.add("fadeIn"); b1.classList.add("addAddBtnA"); 
+  b1.value = 'Add \"and ____\"'; b1.onclick = function(){ actionStr.addJoining("and"); };
+  
+  let b2 = document.createElement("INPUT");
+  b2.type = "button"; b2.classList.add("fadeIn"); b2.classList.add("addAddBtnA"); 
+  b2.value = 'Add \"or ____\"'; b2.onclick = function(){ actionStr.addJoining("or"); };
+  
+  
+  document.getElementById("actionclause").appendChild(b1);
+  document.getElementById("actionclause").appendChild(b2);
+  
+}
 
 
 
@@ -668,27 +744,50 @@ conditionStr.not = function(a){
   return '<span class="spanbox"><span>'+conditionStr.general(b)+'</span> is not true</span>';
 };
 
+conditionStr.addJoining = function(elid,inp){
+  let a = pushCondition();
+  conditionTree[a].name = inp;
+  conditionTree[a].c1 = (elid==="onlyifouterspan")?cthead1:cthead2;
+  let b2 = conditionTree[a].c2 = pushCondition();
+  let outerel = document.getElementById(elid);
+  let form1 = document.getElementById("form1");
+  
+  let elvalues = [];
+  for(let a=0;a<form1.length;a++)
+    if(form1[a].name&&form1[a].name.startsWith("inputc")) 
+      elvalues.push({name:form1[a].name,value:form1[a].value});
+  
+  outerel.innerHTML = '<span class="spanbox"><span>'+outerel.innerHTML+'</span> '+inp+' <span>'+conditionStr.general(b2)+'</span></span>';
+  
+  for(let a=0;a<elvalues.length;a++) 
+    form1[elvalues[a].name].value = elvalues[a].value;
+  
+  if(elid==="onlyifouterspan") cthead1 = a;
+  else cthead2 = a;
+};
+
+
 
 function addOnlyIfCondition(){
-  document.getElementById("onlyifclause").innerHTML = "Only if <span style='line-height:40px;'>"+conditionStr.general(0)+"</span>"+
-        "<br><input type='button' value='Clear expression' onclick='addOnlyIfCondition()' class='fadeIn'><input type='button' value='Delete \"only if\"' onclick='deleteOnlyIf()' class='fadeIn'>";
-  conditionTree[0] = {name:""};
+  document.getElementById("onlyifclause").innerHTML = "Only if <span style='line-height:40px;' id='onlyifouterspan'>"+conditionStr.general(cthead1)+"</span>"+
+        "<br><input type='button' value='Clear expression' onclick='addOnlyIfCondition()' class='fadeIn'><input type='button' value='Delete \"only if\"' onclick='deleteOnlyIf()' class='fadeIn'> <input type='button' value='Add \"and ____\"' onclick='conditionStr.addJoining(\"onlyifouterspan\",\"and\")' class='fadeIn'> <input type='button' value='Add \"or ____\"' onclick='conditionStr.addJoining(\"onlyifouterspan\",\"or\")' class='fadeIn'>";
+  conditionTree[cthead1] = {name:""};
 }
 
 function deleteOnlyIf(){
   document.getElementById("onlyifclause").innerHTML = "<input type=\"button\" value='Add \"only if\"' onclick=\"addOnlyIfCondition()\" class=\"fadeIn\">";
-  conditionTree[0] = {name:""};
+  cthead1 = pushCondition();
 }
 
 function addExceptCondition(){
-  document.getElementById("exceptclause").innerHTML = "Unless <span style='line-height:40px;'>"+conditionStr.general(1)+"</span>"+
-        "<br><input type='button' value='Clear expression' onclick='addExceptCondition()' class='fadeIn'><input type='button' value='Delete \"unless\"' onclick='deleteExcept()' class='fadeIn'>";
-  conditionTree[1] = {name:""};
+  document.getElementById("exceptclause").innerHTML = "Unless <span style='line-height:40px;' id='exceptouterspan'>"+conditionStr.general(cthead2)+"</span>"+
+        "<br><input type='button' value='Clear expression' onclick='addExceptCondition()' class='fadeIn'><input type='button' value='Delete \"unless\"' onclick='deleteExcept()' class='fadeIn'> <input type='button' value='Add \"and ____\"' onclick='conditionStr.addJoining(\"exceptouterspan\",\"and\")' class='fadeIn'> <input type='button' value='Add \"or ____\"' onclick='conditionStr.addJoining(\"exceptouterspan\",\"or\")' class='fadeIn'>";
+  conditionTree[cthead2] = {name:""};
 }
 
 function deleteExcept(){
   document.getElementById("exceptclause").innerHTML = "<input type=\"button\" value='Add \"unless\"' onclick=\"addExceptCondition()\" class=\"fadeIn\">";
-  conditionTree[1] = {name:""};
+  cthead2 = pushCondition();
 }
 
 function conditionChangeHandler(e,a){
@@ -740,7 +839,7 @@ function discardChanges(){
 let form1 = document.getElementById("form1");
 form1.onsubmit = function(e){
   if(!checkPolicyName(form1.policyname.value)){
-    alert("Please enter a valid policy name");
+    alert("Please enter a valid policy name. Valid policy names must start with a letter, and must only contain numbers, letters, dashes ( - ), and underscores ( _ )");
     e.preventDefault();
     return;
   }
