@@ -39,6 +39,7 @@
   </div>
   <div>
     <button class="btn btn-success" onclick="newPolicy()">New Policy</button>
+    <button class="btn btn-success" id="switchPolicyViewBtn"></button>
   </div>
   <br>
   <br>
@@ -71,7 +72,7 @@
         <option value="DENY">Deny</option>
       </select>
       
-      <span style="line-height:40px;">[Loading options...]</span>
+      <span style="line-height:40px;" id="actionouterspan">[Loading options...]</span>
       <br>
       <input type="button" value="Clear expression" onclick="clearAction()" class="fadeIn">
       
