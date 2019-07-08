@@ -203,6 +203,9 @@ function openPolicyEditingForm(ind,newForm){
       addExceptCondition();
       constructConditionHTML(1,policies[ind].cthead2);
     }
+    
+    //disabled when action clause is blank
+    document.getElementById("form1").submit.disabled = false;
   }
   
 }
@@ -220,6 +223,7 @@ function closePolicyEditingForm(){
   clearAction();
   deleteOnlyIf();
   deleteExcept();
+  resetCollapsables();
 }
 
 
@@ -321,7 +325,9 @@ function constructValuechoice(newind,treeind){
   let el = document.getElementById("form1")["inputa"+newind];
   el.value = node.value1; el.onchange();
   el = document.getElementById("form1")["inputa"+newind];
-  el.value = node.value2; (el.onchange||el.oninput)();
+  el.value = node.value2; 
+  if(el.onchange) el.onchange();
+  if(el.oninput) el.oninput();
 }
 
 
@@ -438,15 +444,40 @@ function constructConditionLanguage(a){
 }
 
 
+document.getElementById("actioncollapsebutton").onclick = function(){
+  document.getElementById("actioncollapsebutton").style.display = "none";
+  document.getElementById("onlyifcollapsebutton").style.display = "inline-block";
+  document.getElementById("form1").submit.disabled = false;
+};
+
+document.getElementById("onlyifcollapsebutton").onclick = function(){
+  document.getElementById("onlyifcollapsebutton").style.display = "none";
+  document.getElementById("exceptcollapsebutton").style.display = "inline-block";
+};
+
+document.getElementById("exceptcollapsebutton").onclick = function(){
+  document.getElementById("exceptcollapsebutton").style.display = "none";
+  document.getElementById("dummycollapsebutton").style.display = "inline-block";
+};
 
 
 
 
+function resetCollapsables(){
+  document.getElementById("actionclausewrapper").classList.remove("show");
+  document.getElementById("onlyifclausewrapper").classList.remove("show");
+  document.getElementById("exceptclausewrapper").classList.remove("show");
+  document.getElementById("actioncollapsebutton").style.display = "inline-block";
+  document.getElementById("onlyifcollapsebutton").style.display = "none";
+  document.getElementById("exceptcollapsebutton").style.display = "none";
+  document.getElementById("dummycollapsebutton").style.display = "none";
+  document.getElementById("form1").submit.disabled = true;
+}
 
 
 function createSelectionStr(str,a,name,ar){
   let f = '<span>'+str+'<select name="'+name+'" onchange="'+a+'.value=this.value" required>'+
-            '<option value=""></option>';
+            '<option value="" hidden></option>';
   ar.forEach(s=> f+='<option value="'+s+'">'+s+'</option>');
   f+='</select></span>';
   return f;
@@ -456,7 +487,7 @@ function createSelectionStr(str,a,name,ar){
 let actionStr = {
 
       begin: function(a){return '<select required name="inputa'+a+'" onchange="actionChangeHandler(event,'+a+');addAddButtons()">'+
-                    '<option value=""></option>'+
+                    '<option value="" hidden></option>'+
                     '<option value="everything">everything</option>'+
                     '<option value="device">device is/isn\'t</option>'+
                     '<option value="command">command is/isn\'t</option>'+
@@ -467,7 +498,7 @@ let actionStr = {
                  '</select>'},
                         
       general: function(a){return '<select required name="inputa'+a+'" onchange="actionChangeHandler(event,'+a+')">'+
-                    '<option value=""></option>'+
+                    '<option value="" hidden></option>'+
                     '<option value="device">device is</option>'+
                     '<option value="command">command is</option>'+
                     '<option value="setting">command input is</option>'+
@@ -541,7 +572,7 @@ actionStr.not = function(a){
 };
 
 
-document.getElementById("actionclause").children[1].innerHTML = actionStr.begin(athead);
+document.getElementById("actionouterspan").innerHTML = actionStr.begin(athead);
 
 
 function actionChangeHandler(e,a){
@@ -560,11 +591,10 @@ function actionChangeHandler(e,a){
 
 function clearAction(){
   athead = pushAction();
-  let aclauseEl = document.getElementById("actionclause");
-  aclauseEl.children[1].innerHTML = actionStr.begin(athead);
+  document.getElementById("actionouterspan").innerHTML = actionStr.begin(athead);
   
   let els = document.getElementsByClassName("addAddBtnA");
-  while(els.length>0) aclauseEl.removeChild(els[0]);
+  while(els.length>0) document.getElementById("actionclause").removeChild(els[0]);
 }
 
 actionStr.addJoining = function(inp){
@@ -775,7 +805,7 @@ function addOnlyIfCondition(){
 }
 
 function deleteOnlyIf(){
-  document.getElementById("onlyifclause").innerHTML = "<input type=\"button\" value='Add \"only if\"' onclick=\"addOnlyIfCondition()\" class=\"fadeIn\">";
+  document.getElementById("onlyifclause").innerHTML = "<input type=\"button\" value='Add \"Only If\" Clause (optional)' onclick=\"addOnlyIfCondition()\" class=\"fadeIn\">";
   cthead1 = pushCondition();
 }
 
@@ -786,7 +816,7 @@ function addExceptCondition(){
 }
 
 function deleteExcept(){
-  document.getElementById("exceptclause").innerHTML = "<input type=\"button\" value='Add \"unless\"' onclick=\"addExceptCondition()\" class=\"fadeIn\">";
+  document.getElementById("exceptclause").innerHTML = "<input type=\"button\" value='Add \"Unless\" Clause (optional)' onclick=\"addExceptCondition()\" class=\"fadeIn\">";
   cthead2 = pushCondition();
 }
 
