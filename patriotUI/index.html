@@ -22,6 +22,16 @@
     input[type=number]{
         width: 80px;
     }
+    .clause{
+      margin-bottom:30px;
+    }
+    /*select{
+      border:none;
+        background:none;
+        color:blue;
+        -webkit-appearance: none;
+        cursor:pointer;
+    }*/
   </style>
   
   
@@ -59,35 +69,66 @@
   
 <div class="container" id="buildersection" style="display:none">
   <form id="form1">
-    <div>
-      <label>Policy</label> 
-      <input name="policyname" type="text" placeholder="name" required></input>
+    <div class="form-group">
+        <h5 style="float:left">Policy Name:</h5>
+        <a style="float:right" data-toggle="collapse" data-target="#policynamehelp" href="#">Show help</a>
+        <div style="clear:both"></div>
+        <div id="policynamehelp" class="collapse">
+          <p>The policy name helps you remember what the policy does. For example, if you have a policy that keeps your garage door from being opened, you might call it "garage_door_close" or "garage-door-close". <a data-toggle="collapse" data-target="#policynamehelp" href="#">Close help</a></p>
+        </div>
+      <input class="form-control" name="policyname" type="text" required></input>
     </div>
-    <br>    
     
-    <div id="actionclause">
-      <select name="allowdeny" required>
-        <option value=""></option>
-        <option value="ALLOW">Allow</option>
-        <option value="DENY">Deny</option>
-      </select>
-      
-      <span style="line-height:40px;" id="actionouterspan">[Loading options...]</span>
-      <br>
-      <input type="button" value="Clear expression" onclick="clearAction()" class="fadeIn">
-      
+    <div id="actionclausewrapper" class="collapse clause">
+      <h5 style="float:left">Action Clause:</h5>
+      <a style="float:right" data-toggle="collapse" data-target="#actionclausehelp" href="#">Show help</a>
+      <div style="clear:both"></div>  
+      <div id="actionclausehelp" class="collapse">
+        <p>The action clause specifies the default behavior for a device or command. For example, if you want to make sure the garage door can only be opened by the garage door opener, your action clause would need to deny the garage door from being opened by default. This could be written as "Deny device is garage-door and command is open". You will specify that this behavior doesn't apply to the garage door opener in the later steps. <a data-toggle="collapse" data-target="#actionclausehelp" href="#">Close help</a></p>
+      </div>
+      <div id="actionclause">
+        <select name="allowdeny" required>
+          <option value="" hidden>Allow/Deny</option>
+          <option value="ALLOW">Allow</option>
+          <option value="DENY">Deny</option>
+        </select>
+        <span style="line-height:40px;" id="actionouterspan">[Loading options...]</span>
+        <br>
+        <input type="button" value="Clear expression" onclick="clearAction()" class="fadeIn">
+      </div>
     </div>
-    <br>
-    <div id="onlyifclause">
-      <input type="button" value='Add "only if"' onclick="addOnlyIfCondition()" class="fadeIn">
+    
+    <div id="onlyifclausewrapper" class="collapse clause">
+      <h5 style="float:left">Restriction Clause:</h5>
+      <a style="float:right" data-toggle="collapse" data-target="#onlyifclausehelp" href="#">Show help</a>
+      <div style="clear:both"></div>  
+      <div id="onlyifclausehelp" class="collapse">
+        <p>The restriction clause, AKA the "only if" clause, specifies that the action clause applies only if certain conditions are met. For example, you might want to deny the garage door from opening only if the opening device is not the garage door opener. This could be written as "Deny [action] only if device is not garage-door-opener". This clause is optional. <a data-toggle="collapse" data-target="#onlyifclausehelp" href="#">Close help</a></p>
+      </div>
+      <div id="onlyifclause">
+        <input type="button" value='Add "Only If" Clause (optional)' onclick="addOnlyIfCondition()" class="fadeIn">
+      </div>
     </div>
-    <br>
-    <div id="exceptclause">
-      <input type="button" value='Add "unless"' onclick="addExceptCondition()" class="fadeIn">
+    
+    <div id="exceptclausewrapper" class="collapse clause">
+      <h5 style="float:left">Exception Clause:</h5>
+      <a style="float:right" data-toggle="collapse" data-target="#exceptclausehelp" href="#">Show help</a>
+      <div style="clear:both"></div>  
+      <div id="exceptclausehelp" class="collapse">
+        <p>The exception clause, AKA the "unless" clause, specifies that the action clause applies unless certain conditions are met. For example, you might want to deny the garage door from opening unless the opening device is the garage door opener. This could be written as "Deny [action] unless device is garage-door-opener". This clause is optional. <a data-toggle="collapse" data-target="#exceptclausehelp" href="#">Close help</a></p>
+      </div>
+      <div id="exceptclause">
+        <input type="button" value='Add "Unless" Clause (optional)' onclick="addExceptCondition()" class="fadeIn">
+      </div>
     </div>
-    <br>
-    <input type="submit" name='submit' value='Save'>
-    <input type="button" value='Discard' onclick="discardChanges()">
+    
+    
+    <button id="actioncollapsebutton" type="button" class="btn btn-info" data-toggle="collapse" data-target="#actionclausewrapper">Next Step</button>
+    <button id="onlyifcollapsebutton" type="button" class="btn btn-info" data-toggle="collapse" data-target="#onlyifclausewrapper" style="display:none">Next Step</button>
+    <button id="exceptcollapsebutton" type="button" class="btn btn-info" data-toggle="collapse" data-target="#exceptclausewrapper" style="display:none">Next Step</button>
+    <button id="dummycollapsebutton" type="button" class="btn btn-info" disabled style="display:none">Next Step</button>
+    <input type="submit" class="btn btn-info" name='submit' value='Save Policy' disabled>
+    <input type="button" class="btn btn-info" value='Discard' onclick="discardChanges()">
   </form>
 </div>
 
