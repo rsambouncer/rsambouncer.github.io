@@ -13,8 +13,10 @@
     .fadeIn:hover{opacity:1;}
     .spanbox{
       border:1px solid black;
+      border-top:none;
+      border-bottom:none;
       border-radius:5px;
-      padding: 5px;
+      padding: 0.5rem;
     }
     .numinput{
       line-height:20px;
@@ -32,6 +34,11 @@
         -webkit-appearance: none;
         cursor:pointer;
     }*/
+    select{
+      border-radius:0.25rem;
+      padding:0.25rem;
+      background: white;
+    }
   </style>
   
   
@@ -115,7 +122,7 @@
       <a style="float:right" data-toggle="collapse" data-target="#exceptclausehelp" href="#">Show help</a>
       <div style="clear:both"></div>  
       <div id="exceptclausehelp" class="collapse">
-        <p>The exception clause, AKA the "unless" clause, specifies that the action clause applies unless certain conditions are met. For example, you might want to deny the garage door from opening unless the opening device is the garage door opener. This could be written as "Deny [action] unless device is garage-door-opener". This clause is optional. <a data-toggle="collapse" data-target="#exceptclausehelp" href="#">Close help</a></p>
+        <p>The exception clause, AKA the "unless" clause, specifies that the action clause applies unless certain conditions are met. For example, you might want to deny the garage door from opening unless the opening device is the garage door opener. This could be written as "Deny [action] unless automation unit is garage-door-opener". This clause is optional. <a data-toggle="collapse" data-target="#exceptclausehelp" href="#">Close help</a></p>
       </div>
       <div id="exceptclause">
         <input type="button" value='Add "Unless" Clause (optional)' onclick="addExceptCondition()" class="fadeIn">
