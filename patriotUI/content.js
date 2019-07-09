@@ -444,6 +444,19 @@ function constructConditionLanguage(a){
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 document.getElementById("actioncollapsebutton").onclick = function(){
   document.getElementById("actioncollapsebutton").style.display = "none";
   document.getElementById("onlyifcollapsebutton").style.display = "inline-block";
@@ -467,6 +480,10 @@ function resetCollapsables(){
   document.getElementById("actionclausewrapper").classList.remove("show");
   document.getElementById("onlyifclausewrapper").classList.remove("show");
   document.getElementById("exceptclausewrapper").classList.remove("show");
+  document.getElementById("policynamehelp").classList.remove("show");
+  document.getElementById("actionclausehelp").classList.remove("show");
+  document.getElementById("onlyifclausehelp").classList.remove("show");
+  document.getElementById("exceptclausehelp").classList.remove("show");
   document.getElementById("actioncollapsebutton").style.display = "inline-block";
   document.getElementById("onlyifcollapsebutton").style.display = "none";
   document.getElementById("exceptcollapsebutton").style.display = "none";
