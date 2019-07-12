@@ -206,6 +206,8 @@ function openPolicyEditingForm(ind,newForm){
     
     //disabled when action clause is blank
     document.getElementById("form1").submit.disabled = false;
+    //they don't need to be walked through
+    expandAllCollapsableSections();
   }
   
 }
@@ -435,7 +437,7 @@ function constructConditionLanguage(a){
     case "date": return "date"+recurse(node.c)+node.value;
     case "since": return "since ("+recurse(node.c1)+") then ("+recurse(node.c2)+") "+recurse(node.c3);
     case "once": return "("+recurse(node.c1)+") happened "+recurse(node.c2);
-    case "lastly": return "("+recurse(node.c1)+") last happened "+recurse(node.c2);
+    case "lastly": return "Last state, ("+recurse(node.c1)+") "+recurse(node.c2);
     case "and": return "("+recurse(node.c1)+") and ("+recurse(node.c2)+")";
     case "or": return "("+recurse(node.c1)+") or ("+recurse(node.c2)+")";
     case "not": return "("+recurse(node.c)+") is not true";
@@ -454,7 +456,13 @@ function constructConditionLanguage(a){
 
 
 
-
+function styleSpanBox(st){ //"add parenthesis" checkbox
+  if(st){
+    document.styleSheets[1].addRule(".spanbox","border:1px solid black;border-top:none;border-bottom:none;border-radius: 0.5rem;padding: 0.5rem;",0)
+  }else{
+    document.styleSheets[1].removeRule(0);
+  }
+}
 
 
 document.getElementById("actioncollapsebutton").onclick = function(){
@@ -475,6 +483,17 @@ document.getElementById("exceptcollapsebutton").onclick = function(){
 
 
 
+function expandAllCollapsableSections(){
+  //not the helps, but the clauses
+  document.getElementById("actionclausewrapper").classList.add("show");
+  document.getElementById("onlyifclausewrapper").classList.add("show");
+  document.getElementById("exceptclausewrapper").classList.add("show");
+  document.getElementById("actioncollapsebutton").style.display = "none";
+  document.getElementById("onlyifcollapsebutton").style.display = "none";
+  document.getElementById("exceptcollapsebutton").style.display = "none";
+  document.getElementById("dummycollapsebutton").style.display = "none";
+  document.getElementById("form1").submit.disabled = false;
+}
 
 function resetCollapsables(){
   document.getElementById("actionclausewrapper").classList.remove("show");
@@ -650,6 +669,7 @@ function addAddButtons(){
   
   
   document.getElementById("actionclause").appendChild(b1);
+  document.getElementById("actionclause").appendChild(document.createTextNode(" "));
   document.getElementById("actionclause").appendChild(b2);
   
 }
@@ -683,7 +703,7 @@ let conditionStr = {
        '<option value="date">date &lt; / &gt; / = [date]</option>'+
        '<option value="since">since ____, ____ within [times]</option>'+
        '<option value="once">______ happened within [times]</option>'+
-       '<option value="lastly"> _______ last happened within [times]</option>'+
+       '<option value="lastly"> Last state, _______ within [times]</option>'+
        '<option value="or">____ or _____</option>'+
        '<option value="and">____ and _____</option>'+
        '<option value="not">____ is not true</option>'+
@@ -770,7 +790,7 @@ conditionStr.lastly = function(a){
   conditionTree[a].name = "lastly";
   let b1 = conditionTree[a].c1 = pushCondition();
   let b2 = conditionTree[a].c2 = pushCondition();
-  return "<span class='spanbox'><span>"+conditionStr.general(b1)+"</span> last happened"+conditionStr.within(b2)+"</span>";
+  return "<span class='spanbox'>Last state, <span>"+conditionStr.general(b1)+"</span> "+conditionStr.within(b2)+"</span>";
 };
 
 conditionStr.and = function(a){
@@ -806,8 +826,15 @@ conditionStr.addJoining = function(elid,inp){
   
   outerel.innerHTML = '<span class="spanbox"><span>'+outerel.innerHTML+'</span> '+inp+' <span>'+conditionStr.general(b2)+'</span></span>';
   
-  for(let a=0;a<elvalues.length;a++) 
+  for(let a=0;a<elvalues.length;a++)
     form1[elvalues[a].name].value = elvalues[a].value;
+  for(let a=1;a<elvalues.length;a++){
+    if(elvalues[a-1].name===elvalues[a].name){
+      form1[elvalues[a].name][0].value = elvalues[a-1].value;
+      form1[elvalues[a].name][1].value = elvalues[a].value;
+    }
+  }
+    
   
   if(elid==="onlyifouterspan") cthead1 = a;
   else cthead2 = a;
@@ -817,23 +844,23 @@ conditionStr.addJoining = function(elid,inp){
 
 function addOnlyIfCondition(){
   document.getElementById("onlyifclause").innerHTML = "Only if <span style='line-height:40px;' id='onlyifouterspan'>"+conditionStr.general(cthead1)+"</span>"+
-        "<br><input type='button' value='Clear expression' onclick='addOnlyIfCondition()' class='fadeIn'><input type='button' value='Delete \"only if\"' onclick='deleteOnlyIf()' class='fadeIn'> <input type='button' value='Add \"and ____\"' onclick='conditionStr.addJoining(\"onlyifouterspan\",\"and\")' class='fadeIn'> <input type='button' value='Add \"or ____\"' onclick='conditionStr.addJoining(\"onlyifouterspan\",\"or\")' class='fadeIn'>";
+        "<br><input type='button' value='Clear expression' onclick='addOnlyIfCondition()' class='fadeIn'> <input type='button' value='Delete restriction clause' onclick='deleteOnlyIf()' class='fadeIn'> <input type='button' value='Add \"and ____\"' onclick='conditionStr.addJoining(\"onlyifouterspan\",\"and\")' class='fadeIn'> <input type='button' value='Add \"or ____\"' onclick='conditionStr.addJoining(\"onlyifouterspan\",\"or\")' class='fadeIn'>";
   conditionTree[cthead1] = {name:""};
 }
 
 function deleteOnlyIf(){
-  document.getElementById("onlyifclause").innerHTML = "<input type=\"button\" value='Add \"Only If\" Clause (optional)' onclick=\"addOnlyIfCondition()\" class=\"fadeIn\">";
+  document.getElementById("onlyifclause").innerHTML = "No restriction clause added. <a href=\"#\" onclick=\"addOnlyIfCondition()\">Click here to add one</a>";
   cthead1 = pushCondition();
 }
 
 function addExceptCondition(){
   document.getElementById("exceptclause").innerHTML = "Unless <span style='line-height:40px;' id='exceptouterspan'>"+conditionStr.general(cthead2)+"</span>"+
-        "<br><input type='button' value='Clear expression' onclick='addExceptCondition()' class='fadeIn'><input type='button' value='Delete \"unless\"' onclick='deleteExcept()' class='fadeIn'> <input type='button' value='Add \"and ____\"' onclick='conditionStr.addJoining(\"exceptouterspan\",\"and\")' class='fadeIn'> <input type='button' value='Add \"or ____\"' onclick='conditionStr.addJoining(\"exceptouterspan\",\"or\")' class='fadeIn'>";
+        "<br><input type='button' value='Clear expression' onclick='addExceptCondition()' class='fadeIn'> <input type='button' value='Delete exception clause' onclick='deleteExcept()' class='fadeIn'> <input type='button' value='Add \"and ____\"' onclick='conditionStr.addJoining(\"exceptouterspan\",\"and\")' class='fadeIn'> <input type='button' value='Add \"or ____\"' onclick='conditionStr.addJoining(\"exceptouterspan\",\"or\")' class='fadeIn'>";
   conditionTree[cthead2] = {name:""};
 }
 
 function deleteExcept(){
-  document.getElementById("exceptclause").innerHTML = "<input type=\"button\" value='Add \"Unless\" Clause (optional)' onclick=\"addExceptCondition()\" class=\"fadeIn\">";
+  document.getElementById("exceptclause").innerHTML = "No exception clause added. <a href=\"#\" onclick=\"addExceptCondition()\">Click here to add one</a>";
   cthead2 = pushCondition();
 }
 
